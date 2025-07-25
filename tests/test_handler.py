@@ -303,3 +303,40 @@ class TestHandler:
         body = response["body"]
         assert "healthy" in body
         assert "leaderboard" in body
+    
+    @patch("src.leaderboard.handler.db")
+    def test_get_leaderboard_generic_value_error(self, mock_db: MagicMock) -> None:
+        """Test leaderboard request with generic ValueError (not parameter validation)."""
+        # Mock the database to return data that causes a ValueError during response creation
+        from src.leaderboard.models import LeaderboardEntry
+        
+        # Create a mock entry with valid data
+        mock_entry = LeaderboardEntry(
+            rank=1,
+            initials="TST",
+            score=100.0,
+            timestamp=datetime(2024, 1, 15, 10, 30, 0)
+        )
+        mock_db.get_leaderboard.return_value = [mock_entry]
+        
+        # Mock event
+        event = {
+            "resource": "/games/leaderboards/v1/{game_id}",
+            "httpMethod": "GET",
+            "path": "/games/leaderboards/v1/test_game",
+            "pathParameters": {"game_id": "test_game"},
+            "headers": {},
+            "queryStringParameters": {"score_type": "high_score", "limit": "10"},
+            "body": None
+        }
+        
+        # Mock LeaderboardResponse to raise ValueError during construction
+        with patch("src.leaderboard.handler.LeaderboardResponse") as mock_response:
+            mock_response.side_effect = ValueError("Invalid response data")
+            
+            # Execute
+            response = self.app.resolve(event, {})
+            
+            # Verify - should catch ValueError and return 400
+            assert response["statusCode"] == 400
+            mock_db.get_leaderboard.assert_called_once()

@@ -357,3 +357,81 @@ class TestLeaderboardDatabase:
             # Should raise RuntimeError
             with pytest.raises(RuntimeError, match="Failed to get leaderboard"):
                 self.db.get_leaderboard("test_game", ScoreType.HIGH_SCORE, 10)
+    
+    def test_submit_score_with_string_score_type(self) -> None:
+        """Test submit_score when score_type is already a string value."""
+        # Create a score record and manually set score_type to string to test line 35
+        score_record = ScoreRecord(
+            game_id="test_game",
+            initials="STR",
+            score=123.0,
+            score_type=ScoreType.HIGH_SCORE,
+            timestamp=datetime(2024, 1, 15, 10, 30, 0)
+        )
+        
+        # Manually override the score_type to be a string instead of enum
+        # This simulates the case where score_type comes in as a string
+        score_record.score_type = "high_score"  # This will cause line 35 to NOT execute
+        
+        # Execute - this should work and cover the string handling path
+        self.db.submit_score(score_record)
+        
+        # Verify it was stored correctly
+        response = self.db.table.get_item(
+            Key={
+                "game_id": "test_game",
+                "sort_key": "high_score#00999999876.000"  # 999999999 - 123 = 999999876
+            }
+        )
+        
+        assert "Item" in response
+        item = response["Item"]
+        assert item["game_id"] == "test_game"
+        assert item["initials"] == "STR"
+        assert float(item["score"]) == 123.0
+        assert item["score_type"] == "high_score"
+    
+    def test_submit_score_enum_conversion(self) -> None:
+        """Test that line 35 is executed when score_type is an enum."""
+        # This test specifically ensures that the enum->string conversion is tested
+        score_record = ScoreRecord(
+            game_id="enum_test",
+            initials="ENM",
+            score=456.0,
+            score_type=ScoreType.FASTEST_TIME,  # Explicitly use enum
+            timestamp=datetime(2024, 1, 15, 10, 30, 0)
+        )
+        
+        # Verify that score_type is indeed an enum before calling submit_score
+        assert isinstance(score_record.score_type, ScoreType)
+        
+        # This should hit line 35: score_type_value = score_type_value.value
+        self.db.submit_score(score_record)
+        
+        # Verify it was stored correctly with fastest_time logic
+        response = self.db.table.get_item(
+            Key={
+                "game_id": "enum_test",
+                "sort_key": "fastest_time#00000000456.000"  # For fastest_time, use positive score
+            }
+        )
+        
+        assert "Item" in response
+        item = response["Item"]
+        assert item["game_id"] == "enum_test"
+        assert item["initials"] == "ENM"
+        assert float(item["score"]) == 456.0
+        assert item["score_type"] == "fastest_time"
+    
+    def test_get_all_score_types_database_error(self) -> None:
+        """Test get_all_score_types_for_game handles DynamoDB errors."""
+        # Mock the table's query method to raise ClientError
+        with patch.object(self.db.table, 'query') as mock_query:
+            mock_query.side_effect = ClientError(
+                error_response={'Error': {'Code': 'ResourceNotFoundException', 'Message': 'Test error'}},
+                operation_name='Query'
+            )
+            
+            # Should raise RuntimeError
+            with pytest.raises(RuntimeError, match="Failed to get score types"):
+                self.db.get_all_score_types_for_game("test_game")
