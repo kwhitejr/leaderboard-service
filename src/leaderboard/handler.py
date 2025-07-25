@@ -29,8 +29,8 @@ def submit_score() -> Dict[str, str]:
     """Submit a score to the leaderboard."""
     try:
         # Parse and validate request body
-        submission = ScoreSubmission.parse_obj(app.current_event.json_body)
-        logger.info("Score submission received", extra={"submission": submission.dict()})
+        submission = ScoreSubmission.model_validate(app.current_event.json_body)
+        logger.info("Score submission received", extra={"submission": submission.model_dump()})
         
         # Create score record with timestamp
         score_record = ScoreRecord(
@@ -106,7 +106,7 @@ def get_leaderboard(game_id: str) -> Dict[str, Any]:
             "entries_count": len(leaderboard_entries)
         })
         
-        return response.dict()
+        return response.model_dump(mode='json')
         
     except ValueError as e:
         logger.warning("Invalid leaderboard request", extra={"error": str(e)})

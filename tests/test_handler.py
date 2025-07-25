@@ -13,7 +13,7 @@ from src.leaderboard.models import LeaderboardEntry, ScoreType
 class TestHandler:
     """Tests for Lambda handler endpoints."""
     
-    def setup_method(self) -> None:
+    def setup_method(self, method) -> None:
         """Set up test environment."""
         # Import here to avoid region issues during module import
         from src.leaderboard.handler import app

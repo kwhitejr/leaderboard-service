@@ -29,19 +29,31 @@ class LeaderboardDatabase:
             # For fastest_time: use positive score for ascending order
             # For longest_time: use negative score for descending order
             
-            if score_record.score_type == ScoreType.FASTEST_TIME:
-                sort_key_score = score_record.score
-            else:  # HIGH_SCORE or LONGEST_TIME
-                sort_key_score = -score_record.score
+            # Handle both enum and string values for score_type
+            score_type_value = score_record.score_type
+            if isinstance(score_type_value, ScoreType):
+                score_type_value = score_type_value.value
             
-            sort_key = f"{score_record.score_type.value}#{sort_key_score:015.3f}"
+            if score_type_value == ScoreType.FASTEST_TIME.value:
+                # For fastest time, lower is better, so use positive score for ascending order
+                sort_key_score = score_record.score
+            elif score_type_value == ScoreType.HIGH_SCORE.value:
+                # For high score, higher is better, so use negative score for descending order
+                # But we need the sort to work correctly: higher scores should sort first
+                # Since DynamoDB sorts ascending, we use (max_possible_score - actual_score)
+                sort_key_score = 999999999 - score_record.score
+            else:  # LONGEST_TIME
+                # For longest time, higher is better, so same logic as high score
+                sort_key_score = 999999999 - score_record.score
+            
+            sort_key = f"{score_type_value}#{sort_key_score:015.3f}"
             
             item = {
                 "game_id": score_record.game_id,
                 "sort_key": sort_key,
                 "initials": score_record.initials,
                 "score": Decimal(str(score_record.score)),
-                "score_type": score_record.score_type.value,
+                "score_type": score_type_value,
                 "timestamp": score_record.timestamp.isoformat(),
             }
             
@@ -58,10 +70,15 @@ class LeaderboardDatabase:
     ) -> List[LeaderboardEntry]:
         """Get leaderboard for a game and score type."""
         try:
+            # Handle both enum and string values for score_type
+            score_type_value = score_type
+            if isinstance(score_type_value, ScoreType):
+                score_type_value = score_type_value.value
+            
             # Query with begins_with to get all scores for this type
             response = self.table.query(
                 KeyConditionExpression=Key("game_id").eq(game_id) & 
-                                     Key("sort_key").begins_with(f"{score_type.value}#"),
+                                     Key("sort_key").begins_with(f"{score_type_value}#"),
                 Limit=limit,
                 ScanIndexForward=True  # Ascending order (best scores first due to our key design)
             )
