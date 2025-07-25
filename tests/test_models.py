@@ -1,6 +1,6 @@
 """Tests for leaderboard models."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 from pydantic import ValidationError
@@ -90,7 +90,7 @@ class TestScoreRecord:
     
     def test_valid_record(self) -> None:
         """Test valid score record."""
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc)
         record = ScoreRecord(
             game_id="snake_classic",
             initials="KMW",
@@ -116,13 +116,13 @@ class TestLeaderboardResponse:
                 rank=1,
                 initials="KMW",
                 score=100.5,
-                timestamp=datetime.utcnow()
+                timestamp=datetime.now(timezone.utc)
             ),
             LeaderboardEntry(
                 rank=2,
                 initials="AMY",
                 score=95.0,
-                timestamp=datetime.utcnow()
+                timestamp=datetime.now(timezone.utc)
             )
         ]
         

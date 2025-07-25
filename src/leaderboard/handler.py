@@ -1,6 +1,6 @@
 """Lambda handler for leaderboard service."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 from aws_lambda_powertools import Logger
@@ -38,7 +38,7 @@ def submit_score() -> Dict[str, str]:
             initials=submission.initials,
             score=submission.score,
             score_type=submission.score_type,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.now(timezone.utc)
         )
         
         # Submit to database

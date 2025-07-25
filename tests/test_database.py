@@ -1,15 +1,18 @@
 """Tests for leaderboard database operations."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 import boto3
-from moto import mock_dynamodb
+from moto import mock_aws
+import pytest
+from unittest.mock import patch, MagicMock
+from botocore.exceptions import ClientError
 
 from src.leaderboard.database import LeaderboardDatabase
 from src.leaderboard.models import ScoreRecord, ScoreType
 
 
-@mock_dynamodb
+@mock_aws
 class TestLeaderboardDatabase:
     """Tests for LeaderboardDatabase class."""
     
@@ -183,3 +186,174 @@ class TestLeaderboardDatabase:
         assert leaderboard[2].rank == 3
         assert leaderboard[2].initials == "BOB"
         assert leaderboard[2].score == 45.2
+    
+    def test_submit_score_longest_time(self) -> None:
+        """Test submitting a longest time score."""
+        # Create test data
+        timestamp = datetime(2024, 1, 15, 10, 30, 0)
+        score_record = ScoreRecord(
+            game_id="survival_game",
+            initials="JOE",
+            score=245.8,
+            score_type=ScoreType.LONGEST_TIME,
+            timestamp=timestamp
+        )
+        
+        # Execute
+        self.db.submit_score(score_record)
+        
+        # Verify by reading back from table
+        # For longest time, higher score is better, so uses same logic as high score
+        # 999999999 - 245.8 = 999999753.2, formatted with padding
+        response = self.db.table.get_item(
+            Key={
+                "game_id": "survival_game", 
+                "sort_key": "longest_time#00999999753.200"
+            }
+        )
+        
+        assert "Item" in response
+        item = response["Item"]
+        assert item["game_id"] == "survival_game"
+        assert item["initials"] == "JOE"
+        assert float(item["score"]) == 245.8
+        assert item["score_type"] == "longest_time"
+    
+    def test_get_leaderboard_longest_time(self) -> None:
+        """Test getting leaderboard for longest time (descending order)."""
+        # Set up test data - submit times (higher is better)
+        scores = [
+            ScoreRecord(
+                game_id="survival_game",
+                initials="JOE",
+                score=245.8,
+                score_type=ScoreType.LONGEST_TIME,
+                timestamp=datetime(2024, 1, 15, 10, 30, 0)
+            ),
+            ScoreRecord(
+                game_id="survival_game",
+                initials="AMY",
+                score=892.3,
+                score_type=ScoreType.LONGEST_TIME,
+                timestamp=datetime(2024, 1, 14, 15, 20, 0)
+            ),
+            ScoreRecord(
+                game_id="survival_game",
+                initials="BOB",
+                score=156.7,
+                score_type=ScoreType.LONGEST_TIME,
+                timestamp=datetime(2024, 1, 13, 12, 10, 0)
+            )
+        ]
+        
+        # Submit scores
+        for score in scores:
+            self.db.submit_score(score)
+        
+        # Execute
+        leaderboard = self.db.get_leaderboard("survival_game", ScoreType.LONGEST_TIME, 10)
+        
+        # Verify - longest time should be first
+        assert len(leaderboard) == 3
+        assert leaderboard[0].rank == 1
+        assert leaderboard[0].initials == "AMY"
+        assert leaderboard[0].score == 892.3
+        assert leaderboard[1].rank == 2
+        assert leaderboard[1].initials == "JOE"
+        assert leaderboard[1].score == 245.8
+        assert leaderboard[2].rank == 3
+        assert leaderboard[2].initials == "BOB"
+        assert leaderboard[2].score == 156.7
+    
+    def test_get_leaderboard_with_string_score_type(self) -> None:
+        """Test getting leaderboard when score_type is passed as string."""
+        # Set up test data 
+        score_record = ScoreRecord(
+            game_id="test_game",
+            initials="TST",
+            score=100.0,
+            score_type=ScoreType.HIGH_SCORE,
+            timestamp=datetime(2024, 1, 15, 10, 30, 0)
+        )
+        self.db.submit_score(score_record)
+        
+        # Execute with string score type (this tests line 35 in database.py)
+        leaderboard = self.db.get_leaderboard("test_game", "high_score", 10)
+        
+        # Verify
+        assert len(leaderboard) == 1
+        assert leaderboard[0].initials == "TST"
+        assert leaderboard[0].score == 100.0
+    
+    def test_get_all_score_types_for_game(self) -> None:
+        """Test getting all score types for a game."""
+        # Set up test data with different score types
+        scores = [
+            ScoreRecord(
+                game_id="multi_game",
+                initials="HS1", 
+                score=100.0,
+                score_type=ScoreType.HIGH_SCORE,
+                timestamp=datetime(2024, 1, 15, 10, 30, 0)
+            ),
+            ScoreRecord(
+                game_id="multi_game",
+                initials="FT1",
+                score=45.2,
+                score_type=ScoreType.FASTEST_TIME,
+                timestamp=datetime(2024, 1, 14, 15, 20, 0)
+            ),
+            ScoreRecord(
+                game_id="multi_game",
+                initials="LT1",
+                score=120.7,
+                score_type=ScoreType.LONGEST_TIME,
+                timestamp=datetime(2024, 1, 13, 12, 10, 0)
+            )
+        ]
+        
+        for score in scores:
+            self.db.submit_score(score)
+        
+        # Execute
+        score_types = self.db.get_all_score_types_for_game("multi_game")
+        
+        # Verify all three score types are present
+        assert len(score_types) == 3
+        assert ScoreType.HIGH_SCORE in score_types
+        assert ScoreType.FASTEST_TIME in score_types
+        assert ScoreType.LONGEST_TIME in score_types
+    
+    def test_submit_score_database_error(self) -> None:
+        """Test submit_score handles DynamoDB errors."""
+        # Mock the table's put_item method to raise ClientError
+        with patch.object(self.db.table, 'put_item') as mock_put_item:
+            mock_put_item.side_effect = ClientError(
+                error_response={'Error': {'Code': 'ValidationException', 'Message': 'Test error'}},
+                operation_name='PutItem'
+            )
+            
+            score_record = ScoreRecord(
+                game_id="test_game",
+                initials="TST",
+                score=100.0,
+                score_type=ScoreType.HIGH_SCORE,
+                timestamp=datetime(2024, 1, 15, 10, 30, 0)
+            )
+            
+            # Should raise RuntimeError
+            with pytest.raises(RuntimeError, match="Failed to submit score"):
+                self.db.submit_score(score_record)
+    
+    def test_get_leaderboard_database_error(self) -> None:
+        """Test get_leaderboard handles DynamoDB errors."""
+        # Mock the table's query method to raise ClientError
+        with patch.object(self.db.table, 'query') as mock_query:
+            mock_query.side_effect = ClientError(
+                error_response={'Error': {'Code': 'ResourceNotFoundException', 'Message': 'Test error'}},
+                operation_name='Query'
+            )
+            
+            # Should raise RuntimeError
+            with pytest.raises(RuntimeError, match="Failed to get leaderboard"):
+                self.db.get_leaderboard("test_game", ScoreType.HIGH_SCORE, 10)

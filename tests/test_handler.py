@@ -4,12 +4,12 @@ from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
-from moto import mock_dynamodb
+from moto import mock_aws
 
 from src.leaderboard.models import LeaderboardEntry, ScoreType
 
 
-@mock_dynamodb
+@mock_aws
 class TestHandler:
     """Tests for Lambda handler endpoints."""
     
@@ -166,3 +166,140 @@ class TestHandler:
         # Verify
         assert response["statusCode"] == 400
         mock_db.get_leaderboard.assert_not_called()
+    
+    @patch("src.leaderboard.handler.db")
+    def test_submit_score_database_error(self, mock_db: MagicMock) -> None:
+        """Test score submission with database error."""
+        # Setup mock to raise RuntimeError
+        mock_db.submit_score.side_effect = RuntimeError("Database error")
+        
+        # Mock event
+        event = {
+            "resource": "/games/scores/v1",
+            "httpMethod": "POST",
+            "path": "/games/scores/v1",
+            "headers": {"Content-Type": "application/json"},
+            "queryStringParameters": None,
+            "body": '{"game_id": "snake_classic", "initials": "KMW", "score": 103.0, "score_type": "high_score"}'
+        }
+        
+        # Execute and verify it raises the RuntimeError
+        with pytest.raises(RuntimeError, match="Database error"):
+            self.app.resolve(event, {})
+    
+    @patch("src.leaderboard.handler.db")
+    def test_submit_score_unexpected_error(self, mock_db: MagicMock) -> None:
+        """Test score submission with unexpected error."""
+        # Setup mock to raise generic Exception
+        mock_db.submit_score.side_effect = Exception("Unexpected error")
+        
+        # Mock event
+        event = {
+            "resource": "/games/scores/v1",
+            "httpMethod": "POST",
+            "path": "/games/scores/v1",
+            "headers": {"Content-Type": "application/json"},
+            "queryStringParameters": None,
+            "body": '{"game_id": "snake_classic", "initials": "KMW", "score": 103.0, "score_type": "high_score"}'
+        }
+        
+        # Execute and verify it raises the Exception
+        with pytest.raises(Exception, match="Unexpected error"):
+            self.app.resolve(event, {})
+    
+    @patch("src.leaderboard.handler.db")
+    def test_get_leaderboard_database_error(self, mock_db: MagicMock) -> None:
+        """Test leaderboard request with database error."""
+        # Setup mock to raise RuntimeError
+        mock_db.get_leaderboard.side_effect = RuntimeError("Database error")
+        
+        # Mock event
+        event = {
+            "resource": "/games/leaderboards/v1/{game_id}",
+            "httpMethod": "GET",
+            "path": "/games/leaderboards/v1/snake_classic",
+            "pathParameters": {"game_id": "snake_classic"},
+            "headers": {},
+            "queryStringParameters": {"score_type": "high_score", "limit": "10"},
+            "body": None
+        }
+        
+        # Execute and verify it raises the RuntimeError
+        with pytest.raises(RuntimeError, match="Database error"):
+            self.app.resolve(event, {})
+    
+    @patch("src.leaderboard.handler.db")
+    def test_get_leaderboard_unexpected_error(self, mock_db: MagicMock) -> None:
+        """Test leaderboard request with unexpected error."""
+        # Setup mock to raise generic Exception
+        mock_db.get_leaderboard.side_effect = Exception("Unexpected error")
+        
+        # Mock event
+        event = {
+            "resource": "/games/leaderboards/v1/{game_id}",
+            "httpMethod": "GET",
+            "path": "/games/leaderboards/v1/snake_classic",
+            "pathParameters": {"game_id": "snake_classic"},
+            "headers": {},
+            "queryStringParameters": {"score_type": "high_score", "limit": "10"},
+            "body": None
+        }
+        
+        # Execute and verify it raises the Exception
+        with pytest.raises(Exception, match="Unexpected error"):
+            self.app.resolve(event, {})
+    
+    @patch("src.leaderboard.handler.db")
+    def test_get_leaderboard_parameter_validation_error(self, mock_db: MagicMock) -> None:
+        """Test leaderboard request with parameter validation error."""
+        # Mock event with invalid limit format
+        event = {
+            "resource": "/games/leaderboards/v1/{game_id}",
+            "httpMethod": "GET", 
+            "path": "/games/leaderboards/v1/snake_classic",
+            "pathParameters": {"game_id": "snake_classic"},
+            "headers": {},
+            "queryStringParameters": {"limit": "not_a_number"},
+            "body": None
+        }
+        
+        # Execute
+        response = self.app.resolve(event, {})
+        
+        # Verify
+        assert response["statusCode"] == 400
+        mock_db.get_leaderboard.assert_not_called()
+    
+    def test_lambda_handler_integration(self) -> None:
+        """Test the lambda_handler entry point."""
+        # Import the lambda_handler function
+        from src.leaderboard.handler import lambda_handler
+        
+        # Mock event for health check
+        event = {
+            "resource": "/health",
+            "httpMethod": "GET",
+            "path": "/health",
+            "headers": {},
+            "queryStringParameters": None,
+            "body": None
+        }
+        
+        # Mock context with all required attributes
+        context = type('Context', (), {
+            'aws_request_id': 'test-request-id',
+            'function_name': 'test-function',
+            'function_version': '$LATEST',
+            'invoked_function_arn': 'arn:aws:lambda:us-east-1:123456789012:function:test-function',
+            'memory_limit_in_mb': '128',
+            'remaining_time_in_millis': lambda: 30000,
+        })()
+        
+        # Execute
+        response = lambda_handler(event, context)
+        
+        # Verify
+        assert response["statusCode"] == 200
+        body = response["body"]
+        assert "healthy" in body
+        assert "leaderboard" in body
