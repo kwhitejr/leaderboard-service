@@ -1,0 +1,38 @@
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.ruff]
+select = ["E", "F", "W", "C", "N", "UP", "S", "B", "A", "C4", "ICN", "PIE", "T20", "Q"]
+ignore = ["E501"]  # Line too long (handled by black)
+line-length = 88
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+check_untyped_defs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "-v --tb=short"
+env = [
+    "AWS_DEFAULT_REGION=us-east-1",
+    "AWS_ACCESS_KEY_ID=testing",
+    "AWS_SECRET_ACCESS_KEY=testing",
+]
+
+[tool.mutmut]
+runner = "python -m pytest"
+tests_dir = "tests/"
