@@ -18,16 +18,16 @@ def localstack_container() -> Generator[LocalStackContainer, None, None]:
     """Start LocalStack container for integration tests."""
     with LocalStackContainer(image="localstack/localstack:3.0") as localstack:
         localstack.with_services("dynamodb", "lambda", "apigateway")
-        
+
         # Wait for LocalStack to be ready
         time.sleep(2)
-        
+
         # Set AWS environment variables for tests
         os.environ["AWS_ENDPOINT_URL"] = localstack.get_url()
         os.environ["AWS_ACCESS_KEY_ID"] = "test"
         os.environ["AWS_SECRET_ACCESS_KEY"] = "test"
         os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
-        
+
         yield localstack
 
 
@@ -39,7 +39,7 @@ def dynamodb_client(localstack_container: LocalStackContainer):
         endpoint_url=localstack_container.get_url(),
         aws_access_key_id="test",
         aws_secret_access_key="test",
-        region_name="us-east-1"
+        region_name="us-east-1",
     )
 
 
@@ -47,35 +47,35 @@ def dynamodb_client(localstack_container: LocalStackContainer):
 def dynamodb_table(dynamodb_client, localstack_container: LocalStackContainer):
     """Create and configure DynamoDB table for tests."""
     table_name = "leaderboard-scores-test"
-    
+
     # Create table
     try:
         dynamodb_client.create_table(
             TableName=table_name,
             KeySchema=[
                 {"AttributeName": "game_id", "KeyType": "HASH"},
-                {"AttributeName": "sort_key", "KeyType": "RANGE"}
+                {"AttributeName": "sort_key", "KeyType": "RANGE"},
             ],
             AttributeDefinitions=[
                 {"AttributeName": "game_id", "AttributeType": "S"},
-                {"AttributeName": "sort_key", "AttributeType": "S"}
+                {"AttributeName": "sort_key", "AttributeType": "S"},
             ],
-            BillingMode="PAY_PER_REQUEST"
+            BillingMode="PAY_PER_REQUEST",
         )
-        
+
         # Wait for table to be active
-        waiter = dynamodb_client.get_waiter('table_exists')
+        waiter = dynamodb_client.get_waiter("table_exists")
         waiter.wait(TableName=table_name)
-        
+
     except dynamodb_client.exceptions.ResourceInUseException:
         # Table already exists
         pass
-    
+
     # Set environment variable so our code uses the test table
     os.environ["LEADERBOARD_TABLE"] = table_name
-    
+
     yield table_name
-    
+
     # Cleanup
     try:
         dynamodb_client.delete_table(TableName=table_name)
@@ -88,39 +88,36 @@ def leaderboard_db(dynamodb_table: str, localstack_container: LocalStackContaine
     """Create LeaderboardDatabase instance connected to test table."""
     # Override the table name and endpoint for testing
     original_table_name = os.environ.get("LEADERBOARD_TABLE")
-    
+
     os.environ["LEADERBOARD_TABLE"] = dynamodb_table
-    
+
     # Create database instance
     db = LeaderboardDatabase(table_name=dynamodb_table)
-    
+
     # Override the DynamoDB resource to use LocalStack endpoint
     db.dynamodb = boto3.resource(
         "dynamodb",
         endpoint_url=localstack_container.get_url(),
         aws_access_key_id="test",
         aws_secret_access_key="test",
-        region_name="us-east-1"
+        region_name="us-east-1",
     )
     db.table = db.dynamodb.Table(dynamodb_table)
-    
+
     yield db
-    
+
     # Cleanup - clear all items from table
     try:
         # Scan all items and delete them
         response = db.table.scan()
         with db.table.batch_writer() as batch:
-            for item in response.get('Items', []):
+            for item in response.get("Items", []):
                 batch.delete_item(
-                    Key={
-                        'game_id': item['game_id'],
-                        'sort_key': item['sort_key']
-                    }
+                    Key={"game_id": item["game_id"], "sort_key": item["sort_key"]}
                 )
     except Exception:
         pass
-    
+
     # Restore original table name
     if original_table_name:
         os.environ["LEADERBOARD_TABLE"] = original_table_name
@@ -136,7 +133,7 @@ def api_gateway_event_template() -> Dict:
         "headers": {
             "Accept": "application/json",
             "Content-Type": "application/json",
-            "User-Agent": "integration-test"
+            "User-Agent": "integration-test",
         },
         "multiValueHeaders": {},
         "queryStringParameters": None,
@@ -168,13 +165,13 @@ def api_gateway_event_template() -> Dict:
                 "cognitoAuthenticationProvider": None,
                 "userArn": None,
                 "userAgent": "integration-test",
-                "user": None
+                "user": None,
             },
             "domainName": "test.execute-api.us-east-1.amazonaws.com",
-            "apiId": "test"
+            "apiId": "test",
         },
         "body": None,
-        "isBase64Encoded": False
+        "isBase64Encoded": False,
     }
 
 
@@ -185,24 +182,27 @@ def sample_score_data() -> Dict:
         "game_id": "integration_test_game",
         "initials": "INT",
         "score": 1000.0,
-        "score_type": "high_score"
+        "score_type": "high_score",
     }
 
 
 @pytest.fixture
 def lambda_context():
     """Mock Lambda context for testing."""
+
     class MockLambdaContext:
         def __init__(self):
             self.function_name = "leaderboard-test"
             self.function_version = "$LATEST"
-            self.invoked_function_arn = "arn:aws:lambda:us-east-1:123456789012:function:leaderboard-test"
+            self.invoked_function_arn = (
+                "arn:aws:lambda:us-east-1:123456789012:function:leaderboard-test"
+            )
             self.memory_limit_in_mb = 128
             self.remaining_time_in_millis = lambda: 30000
             self.log_group_name = "/aws/lambda/leaderboard-test"
             self.log_stream_name = "2024/01/01/[$LATEST]test"
             self.aws_request_id = "test-request-id"
-    
+
     return MockLambdaContext()
 
 
@@ -212,7 +212,7 @@ def create_api_event(
     body: Dict = None,
     query_params: Dict = None,
     path_params: Dict = None,
-    template: Dict = None
+    template: Dict = None,
 ) -> Dict:
     """Helper function to create API Gateway events."""
     if template is None:
@@ -226,11 +226,7 @@ def create_api_event(
             "pathParameters": path_params,
             "body": json.dumps(body) if body else None,
             "isBase64Encoded": False,
-            "requestContext": {
-                "httpMethod": method,
-                "path": path,
-                "stage": "test"
-            }
+            "requestContext": {"httpMethod": method, "path": path, "stage": "test"},
         }
     else:
         # Use provided template and override specific fields
@@ -243,5 +239,5 @@ def create_api_event(
         template["body"] = json.dumps(body) if body else None
         template["requestContext"]["httpMethod"] = method
         template["requestContext"]["path"] = path
-    
+
     return template

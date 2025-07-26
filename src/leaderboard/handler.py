@@ -30,29 +30,33 @@ def submit_score() -> Dict[str, str]:
     try:
         # Parse and validate request body
         submission = ScoreSubmission.model_validate(app.current_event.json_body)
-        logger.info("Score submission received", extra={"submission": submission.model_dump()})
-        
+        logger.info(
+            "Score submission received", extra={"submission": submission.model_dump()}
+        )
+
         # Create score record with timestamp
         score_record = ScoreRecord(
             game_id=submission.game_id,
             initials=submission.initials,
             score=submission.score,
             score_type=submission.score_type,
-            timestamp=datetime.now(timezone.utc)
+            timestamp=datetime.now(timezone.utc),
         )
-        
+
         # Submit to database
         db.submit_score(score_record)
-        logger.info("Score submitted successfully", extra={"game_id": submission.game_id})
-        
+        logger.info(
+            "Score submitted successfully", extra={"game_id": submission.game_id}
+        )
+
         return {
             "message": "Score submitted successfully",
             "game_id": submission.game_id,
             "initials": submission.initials,
             "score": submission.score,
-            "score_type": submission.score_type.value
+            "score_type": submission.score_type.value,
         }
-        
+
     except ValidationError as e:
         logger.warning("Invalid score submission", extra={"errors": e.errors()})
         raise BadRequestError(f"Invalid request: {e}")
@@ -69,45 +73,46 @@ def get_leaderboard(game_id: str) -> Dict[str, Any]:
     """Get leaderboard for a specific game."""
     try:
         # Get query parameters
-        score_type_param = app.current_event.get_query_string_value("score_type", "high_score")
+        score_type_param = app.current_event.get_query_string_value(
+            "score_type", "high_score"
+        )
         limit_param = app.current_event.get_query_string_value("limit", "10")
-        
+
         # Validate parameters
         try:
             score_type = ScoreType(score_type_param)
         except ValueError:
-            raise BadRequestError(f"Invalid score_type: {score_type_param}. Must be one of: {[t.value for t in ScoreType]}")
-        
+            raise BadRequestError(
+                f"Invalid score_type: {score_type_param}. Must be one of: {[t.value for t in ScoreType]}"
+            )
+
         try:
             limit = int(limit_param)
             if limit < 1 or limit > 100:
                 raise ValueError()
         except ValueError:
             raise BadRequestError("Invalid limit: must be an integer between 1 and 100")
-        
-        logger.info("Leaderboard request", extra={
-            "game_id": game_id,
-            "score_type": score_type.value,
-            "limit": limit
-        })
-        
+
+        logger.info(
+            "Leaderboard request",
+            extra={"game_id": game_id, "score_type": score_type.value, "limit": limit},
+        )
+
         # Get leaderboard from database
         leaderboard_entries = db.get_leaderboard(game_id, score_type, limit)
-        
+
         # Create response
         response = LeaderboardResponse(
-            game_id=game_id,
-            score_type=score_type,
-            leaderboard=leaderboard_entries
+            game_id=game_id, score_type=score_type, leaderboard=leaderboard_entries
         )
-        
-        logger.info("Leaderboard retrieved successfully", extra={
-            "game_id": game_id,
-            "entries_count": len(leaderboard_entries)
-        })
-        
-        return response.model_dump(mode='json')
-        
+
+        logger.info(
+            "Leaderboard retrieved successfully",
+            extra={"game_id": game_id, "entries_count": len(leaderboard_entries)},
+        )
+
+        return response.model_dump(mode="json")
+
     except ValueError as e:
         logger.warning("Invalid leaderboard request", extra={"error": str(e)})
         raise BadRequestError(str(e))

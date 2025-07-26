@@ -14,13 +14,15 @@ from .models import LeaderboardEntry, ScoreRecord, ScoreType
 
 class LeaderboardDatabase:
     """DynamoDB operations for leaderboard data."""
-    
+
     def __init__(self, table_name: Optional[str] = None) -> None:
         """Initialize database connection."""
-        self.table_name = table_name or os.environ.get("LEADERBOARD_TABLE", "leaderboard-scores")
+        self.table_name = table_name or os.environ.get(
+            "LEADERBOARD_TABLE", "leaderboard-scores"
+        )
         self.dynamodb = boto3.resource("dynamodb")
         self.table = self.dynamodb.Table(self.table_name)
-    
+
     def submit_score(self, score_record: ScoreRecord) -> None:
         """Submit a score to the leaderboard."""
         try:
@@ -28,12 +30,12 @@ class LeaderboardDatabase:
             # For high_score: use negative score for descending order
             # For fastest_time: use positive score for ascending order
             # For longest_time: use negative score for descending order
-            
+
             # Handle both enum and string values for score_type
             score_type_value = score_record.score_type
             if isinstance(score_type_value, ScoreType):
                 score_type_value = score_type_value.value
-            
+
             if score_type_value == ScoreType.FASTEST_TIME.value:
                 # For fastest time, lower is better, so use positive score for ascending order
                 sort_key_score = score_record.score
@@ -45,9 +47,9 @@ class LeaderboardDatabase:
             else:  # LONGEST_TIME
                 # For longest time, higher is better, so same logic as high score
                 sort_key_score = 999999999 - score_record.score
-            
+
             sort_key = f"{score_type_value}#{sort_key_score:015.3f}"
-            
+
             item = {
                 "game_id": score_record.game_id,
                 "sort_key": sort_key,
@@ -56,17 +58,14 @@ class LeaderboardDatabase:
                 "score_type": score_type_value,
                 "timestamp": score_record.timestamp.isoformat(),
             }
-            
+
             self.table.put_item(Item=item)
-            
+
         except ClientError as e:
             raise RuntimeError(f"Failed to submit score: {e}")
-    
+
     def get_leaderboard(
-        self,
-        game_id: str,
-        score_type: ScoreType,
-        limit: int = 10
+        self, game_id: str, score_type: ScoreType, limit: int = 10
     ) -> List[LeaderboardEntry]:
         """Get leaderboard for a game and score type."""
         try:
@@ -74,43 +73,43 @@ class LeaderboardDatabase:
             score_type_value = score_type
             if isinstance(score_type_value, ScoreType):
                 score_type_value = score_type_value.value
-            
+
             # Query with begins_with to get all scores for this type
             response = self.table.query(
-                KeyConditionExpression=Key("game_id").eq(game_id) & 
-                                     Key("sort_key").begins_with(f"{score_type_value}#"),
+                KeyConditionExpression=Key("game_id").eq(game_id)
+                & Key("sort_key").begins_with(f"{score_type_value}#"),
                 Limit=limit,
-                ScanIndexForward=True  # Ascending order (best scores first due to our key design)
+                ScanIndexForward=True,  # Ascending order (best scores first due to our key design)
             )
-            
+
             leaderboard = []
             for rank, item in enumerate(response["Items"], 1):
                 entry = LeaderboardEntry(
                     rank=rank,
                     initials=item["initials"],
                     score=float(item["score"]),
-                    timestamp=datetime.fromisoformat(item["timestamp"])
+                    timestamp=datetime.fromisoformat(item["timestamp"]),
                 )
                 leaderboard.append(entry)
-            
+
             return leaderboard
-            
+
         except ClientError as e:
             raise RuntimeError(f"Failed to get leaderboard: {e}")
-    
+
     def get_all_score_types_for_game(self, game_id: str) -> List[ScoreType]:
         """Get all score types that exist for a game."""
         try:
             response = self.table.query(
                 KeyConditionExpression=Key("game_id").eq(game_id),
-                ProjectionExpression="score_type"
+                ProjectionExpression="score_type",
             )
-            
+
             score_types = set()
             for item in response["Items"]:
                 score_types.add(ScoreType(item["score_type"]))
-            
+
             return list(score_types)
-            
+
         except ClientError as e:
             raise RuntimeError(f"Failed to get score types: {e}")

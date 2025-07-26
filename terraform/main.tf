@@ -13,10 +13,10 @@ locals {
 
 # DynamoDB Table
 resource "aws_dynamodb_table" "leaderboard_scores" {
-  name           = local.table_name
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "game_id"
-  range_key      = "sort_key"
+  name         = local.table_name
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "game_id"
+  range_key    = "sort_key"
 
   attribute {
     name = "game_id"
@@ -97,17 +97,17 @@ data "archive_file" "lambda_zip" {
 resource "aws_lambda_function" "leaderboard_function" {
   filename         = data.archive_file.lambda_zip.output_path
   function_name    = local.function_name
-  role            = aws_iam_role.lambda_role.arn
-  handler         = "leaderboard.handler.lambda_handler"
+  role             = aws_iam_role.lambda_role.arn
+  handler          = "leaderboard.handler.lambda_handler"
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
-  runtime         = "python3.11"
-  timeout         = 30
+  runtime          = "python3.11"
+  timeout          = 30
 
   environment {
     variables = {
-      LEADERBOARD_TABLE = aws_dynamodb_table.leaderboard_scores.name
+      LEADERBOARD_TABLE       = aws_dynamodb_table.leaderboard_scores.name
       POWERTOOLS_SERVICE_NAME = var.service_name
-      POWERTOOLS_LOG_LEVEL = "INFO"
+      POWERTOOLS_LOG_LEVEL    = "INFO"
     }
   }
 
@@ -179,8 +179,8 @@ resource "aws_api_gateway_integration" "lambda_integration_proxy" {
   http_method = aws_api_gateway_method.proxy_method.http_method
 
   integration_http_method = "POST"
-  type                   = "AWS_PROXY"
-  uri                    = aws_lambda_function.leaderboard_function.invoke_arn
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.leaderboard_function.invoke_arn
 }
 
 # Root method
@@ -198,6 +198,6 @@ resource "aws_api_gateway_integration" "lambda_integration" {
   http_method = aws_api_gateway_method.root_method.http_method
 
   integration_http_method = "POST"
-  type                   = "AWS_PROXY"
-  uri                    = aws_lambda_function.leaderboard_function.invoke_arn
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.leaderboard_function.invoke_arn
 }

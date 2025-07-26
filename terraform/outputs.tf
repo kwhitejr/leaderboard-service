@@ -1,6 +1,6 @@
 output "api_gateway_url" {
   description = "URL of the API Gateway"
-  value       = "${aws_api_gateway_deployment.leaderboard_deployment.invoke_url}"
+  value       = aws_api_gateway_deployment.leaderboard_deployment.invoke_url
 }
 
 output "lambda_function_name" {
