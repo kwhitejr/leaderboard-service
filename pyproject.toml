@@ -34,11 +34,13 @@ env = [
 ]
 
 [tool.mutmut]
-runner = "python3 -m pytest"
+runner = "python3 -m pytest --tb=no -q"
 tests_dir = "tests/"
 paths_to_mutate = "src/leaderboard/"
 backup = false
 show_times = true
+simple_output = true
+timeout_factor = 2.0
 
 [tool.coverage.run]
 source = ["src"]

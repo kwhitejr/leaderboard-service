@@ -168,6 +168,22 @@ Mutation testing helps identify weaknesses in your test suite by:
 
 #### Running Mutation Tests
 
+**Quick Start (Recommended):**
+```bash
+# One-command mutation testing with auto-setup and HTML report
+./scripts/mutate-local.sh
+
+# Quick iteration on models.py only (fast feedback)
+./scripts/mutate-local.sh --quick
+
+# Target specific files
+./scripts/mutate-local.sh --target src/leaderboard/database.py
+
+# Enhanced analysis and reporting
+python scripts/mutation-report.py
+```
+
+**Manual Commands:**
 ```bash
 # Run basic mutation tests
 make mutate
@@ -184,6 +200,12 @@ make mutate-results
 # Clean up mutation artifacts
 make mutate-clean
 ```
+
+**Local Development Tips:**
+- **Start with `--quick`** for fast feedback during development
+- **Use `--target`** to focus on files you're actively changing
+- **HTML report** (`html/index.html`) provides the best analysis experience
+- **Interactive browser** (`make mutate-browse`) is great for investigating specific mutants
 
 #### Interpreting Results
 
@@ -202,6 +224,26 @@ A typical mutation score of 70-80% is considered good, with 90%+ being excellent
 5. **Iterate**: Continue until satisfied with mutation score
 
 Mutation testing complements line coverage by ensuring tests actually validate logic, not just execute code paths.
+
+#### Scheduled CI/CD Integration
+
+The project includes **automated weekly mutation testing** via GitHub Actions:
+
+- **Schedule**: Every Monday at 6:00 AM UTC
+- **Purpose**: Quality assurance without blocking daily development
+- **Manual Trigger**: Available for ad-hoc testing via GitHub UI
+- **Artifacts**: HTML reports and results stored for 30 days
+- **Notifications**: Automated summaries in workflow results
+
+```bash
+# Trigger manually via GitHub CLI
+gh workflow run mutation-testing.yml
+
+# Or run locally with baseline tracking
+python scripts/mutation-baseline.py
+```
+
+The scheduled approach follows 2024 best practices by treating mutation testing as a strategic quality tool rather than a blocking gate, ensuring thorough validation without impacting development velocity.
 
 ## Deployment
 
