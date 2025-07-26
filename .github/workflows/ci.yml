@@ -52,7 +52,7 @@ jobs:
     - name: Generate coverage report for Codecov
       if: success() || failure()
       run: |
-        pytest tests/ --cov=src --cov-report=xml --cov-report=term-missing --tb=no -q
+        pytest tests/unit/ --cov=src --cov-report=xml --cov-report=term-missing --tb=no -q
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -61,9 +61,67 @@ jobs:
         flags: unittests
         name: codecov-umbrella
 
+  integration-test:
+    runs-on: ubuntu-latest
+    
+    services:
+      docker:
+        image: docker:24-dind
+        options: --privileged
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Start Docker daemon
+      run: |
+        # Wait for Docker daemon to be ready
+        timeout 30 bash -c 'until docker info; do sleep 1; done'
+    
+    - name: Run integration tests
+      run: |
+        # Run integration tests with LocalStack
+        pytest tests/integration/ -v --tb=short --maxfail=5
+      env:
+        # Ensure Docker is available for testcontainers
+        DOCKER_HOST: unix:///var/run/docker.sock
+        # LocalStack configuration
+        LOCALSTACK_HOST: localhost
+        AWS_ACCESS_KEY_ID: test
+        AWS_SECRET_ACCESS_KEY: test
+        AWS_DEFAULT_REGION: us-east-1
+    
+    - name: Upload integration test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: integration-test-results
+        path: |
+          pytest-integration-results.xml
+        retention-days: 7
+
   security:
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test, integration-test]
     
     steps:
     - name: Checkout code
@@ -112,7 +170,7 @@ jobs:
   deploy-dev:
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
     runs-on: ubuntu-latest
-    needs: [test, security, terraform-validate]
+    needs: [test, integration-test, security, terraform-validate]
     environment: development
     
     steps:
@@ -146,7 +204,7 @@ jobs:
   deploy-prod:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
-    needs: [test, security, terraform-validate]
+    needs: [test, integration-test, security, terraform-validate]
     environment: production
     
     steps:

@@ -1,6 +1,6 @@
 # Leaderboard Service Development Makefile
 
-.PHONY: help install test coverage check-coverage lint format clean setup-dev mutate mutate-html mutate-browse mutate-results mutate-clean
+.PHONY: help install test coverage check-coverage lint format clean setup-dev mutate mutate-html mutate-browse mutate-results mutate-clean test-integration test-integration-only test-all
 
 # Default target
 help:
@@ -12,7 +12,9 @@ help:
 	@echo "  install       Install dependencies"
 	@echo ""
 	@echo "Testing:"
-	@echo "  test          Run all tests"
+	@echo "  test          Run unit tests only"
+	@echo "  test-integration Run integration tests (requires Docker)"
+	@echo "  test-all      Run both unit and integration tests"
 	@echo "  coverage      Run tests with coverage report"
 	@echo "  check-coverage Run dynamic coverage threshold check"
 	@echo ""
@@ -50,15 +52,15 @@ install:
 	pip install --upgrade pip
 	pip install -r requirements.txt -r requirements-dev.txt
 
-# Run tests
+# Run unit tests only
 test:
-	@echo "🧪 Running tests..."
-	pytest tests/ -v
+	@echo "🧪 Running unit tests..."
+	pytest tests/unit/ -v
 
 # Run tests with coverage
 coverage:
-	@echo "📊 Running tests with coverage..."
-	pytest tests/ --cov=src --cov-report=term-missing --cov-report=html
+	@echo "📊 Running unit tests with coverage..."
+	pytest tests/unit/ --cov=src --cov-report=term-missing --cov-report=html
 	@echo "📈 Coverage report generated in htmlcov/"
 
 # Run dynamic coverage check (same as CI)
@@ -119,6 +121,17 @@ mutate-clean:
 	rm -rf .mutmut-cache/
 	rm -rf html/
 	rm -f mutmut.log
+
+# Run integration tests
+test-integration:
+	@echo "🐳 Running integration tests (requires Docker)..."
+	@echo "⚠️  This will start LocalStack containers"
+	pytest tests/integration/ -v --tb=short
+
+# Run all tests (unit + integration)
+test-all:
+	@echo "🧪 Running all tests..."
+	pytest tests/ -v --tb=short
 
 # Variables for colors
 RESET=\033[0m

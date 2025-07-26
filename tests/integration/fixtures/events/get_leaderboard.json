@@ -1,0 +1,56 @@
+{
+  "resource": "/games/leaderboards/v1/{game_id}",
+  "path": "/games/leaderboards/v1/pac_man",
+  "httpMethod": "GET",
+  "headers": {
+    "Accept": "application/json",
+    "User-Agent": "integration-test-client"
+  },
+  "multiValueHeaders": {
+    "Accept": ["application/json"]
+  },
+  "queryStringParameters": {
+    "score_type": "high_score",
+    "limit": "10"
+  },
+  "multiValueQueryStringParameters": {
+    "score_type": ["high_score"],
+    "limit": ["10"]
+  },
+  "pathParameters": {
+    "game_id": "pac_man"
+  },
+  "stageVariables": null,
+  "requestContext": {
+    "resourceId": "def456",
+    "resourcePath": "/games/leaderboards/v1/{game_id}",
+    "httpMethod": "GET",
+    "extendedRequestId": "test-extended-request-id-002",
+    "requestTime": "01/Jan/2024:12:01:00 +0000",
+    "path": "/test/games/leaderboards/v1/pac_man",
+    "accountId": "123456789012",
+    "protocol": "HTTP/1.1",
+    "stage": "test",
+    "domainPrefix": "test-api",
+    "requestTimeEpoch": 1704110460000,
+    "requestId": "test-request-id-002",
+    "identity": {
+      "cognitoIdentityPoolId": null,
+      "accountId": null,
+      "cognitoIdentityId": null,
+      "caller": null,
+      "sourceIp": "127.0.0.1",
+      "principalOrgId": null,
+      "accessKey": null,
+      "cognitoAuthenticationType": null,
+      "cognitoAuthenticationProvider": null,
+      "userArn": null,
+      "userAgent": "integration-test-client",
+      "user": null
+    },
+    "domainName": "test-api.execute-api.us-east-1.amazonaws.com",
+    "apiId": "test123456"
+  },
+  "body": null,
+  "isBase64Encoded": false
+}

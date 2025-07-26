@@ -18,9 +18,10 @@ from pathlib import Path
 def run_coverage():
     """Run pytest with coverage and return coverage percentage."""
     try:
-        # Run tests with coverage
+        # Run tests with coverage (unit tests only)
         result = subprocess.run([
             'python3', '-m', 'pytest', 
+            'tests/unit/',
             '--cov=src', 
             '--cov-report=term-missing',
             '--tb=short',

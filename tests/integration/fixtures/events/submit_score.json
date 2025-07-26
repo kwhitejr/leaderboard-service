@@ -1,0 +1,50 @@
+{
+  "resource": "/games/scores/v1",
+  "path": "/games/scores/v1",
+  "httpMethod": "POST",
+  "headers": {
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+    "User-Agent": "integration-test-client"
+  },
+  "multiValueHeaders": {
+    "Accept": ["application/json"],
+    "Content-Type": ["application/json"]
+  },
+  "queryStringParameters": null,
+  "multiValueQueryStringParameters": null,
+  "pathParameters": null,
+  "stageVariables": null,
+  "requestContext": {
+    "resourceId": "abc123",
+    "resourcePath": "/games/scores/v1",
+    "httpMethod": "POST",
+    "extendedRequestId": "test-extended-request-id",
+    "requestTime": "01/Jan/2024:12:00:00 +0000",
+    "path": "/test/games/scores/v1",
+    "accountId": "123456789012",
+    "protocol": "HTTP/1.1",
+    "stage": "test",
+    "domainPrefix": "test-api",
+    "requestTimeEpoch": 1704110400000,
+    "requestId": "test-request-id-001",
+    "identity": {
+      "cognitoIdentityPoolId": null,
+      "accountId": null,
+      "cognitoIdentityId": null,
+      "caller": null,
+      "sourceIp": "127.0.0.1",
+      "principalOrgId": null,
+      "accessKey": null,
+      "cognitoAuthenticationType": null,
+      "cognitoAuthenticationProvider": null,
+      "userArn": null,
+      "userAgent": "integration-test-client",
+      "user": null
+    },
+    "domainName": "test-api.execute-api.us-east-1.amazonaws.com",
+    "apiId": "test123456"
+  },
+  "body": "{\"game_id\": \"pac_man\", \"initials\": \"PAC\", \"score\": 15420.0, \"score_type\": \"high_score\"}",
+  "isBase64Encoded": false
+}
