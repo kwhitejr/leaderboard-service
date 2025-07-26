@@ -155,6 +155,54 @@ python scripts/test-coverage-system.py
 
 The system ensures coverage can only stay the same or improve, creating a ratcheting effect that maintains high code quality standards.
 
+### Mutation Testing
+
+Beyond line coverage, the project uses **mutation testing** with `mutmut` to validate test quality by introducing deliberate code changes (mutations) and verifying that tests catch them.
+
+#### What is Mutation Testing?
+
+Mutation testing helps identify weaknesses in your test suite by:
+- Creating small modifications to your source code (mutants)
+- Running your tests against each mutant
+- Reporting which mutants "survived" (weren't caught by tests)
+
+#### Running Mutation Tests
+
+```bash
+# Run basic mutation tests
+make mutate
+
+# Run with HTML report for detailed analysis
+make mutate-html
+
+# Interactive browser for mutation results
+make mutate-browse
+
+# View results summary
+make mutate-results
+
+# Clean up mutation artifacts
+make mutate-clean
+```
+
+#### Interpreting Results
+
+- **Killed mutants**: Good! Your tests caught the change
+- **Surviving mutants**: Areas where tests might be improved
+- **Timeout/Error mutants**: Usually indicate infrastructure issues
+
+A typical mutation score of 70-80% is considered good, with 90%+ being excellent.
+
+#### Mutation Testing Workflow
+
+1. **Run initial mutation test**: `make mutate`
+2. **Analyze survivors**: `make mutate-browse`
+3. **Improve tests**: Add tests to catch surviving mutants
+4. **Re-test**: Run mutation tests again
+5. **Iterate**: Continue until satisfied with mutation score
+
+Mutation testing complements line coverage by ensuring tests actually validate logic, not just execute code paths.
+
 ## Deployment
 
 ### Infrastructure

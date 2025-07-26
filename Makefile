@@ -1,6 +1,6 @@
 # Leaderboard Service Development Makefile
 
-.PHONY: help install test coverage check-coverage lint format clean setup-dev
+.PHONY: help install test coverage check-coverage lint format clean setup-dev mutate mutate-html mutate-browse mutate-results mutate-clean
 
 # Default target
 help:
@@ -15,6 +15,13 @@ help:
 	@echo "  test          Run all tests"
 	@echo "  coverage      Run tests with coverage report"
 	@echo "  check-coverage Run dynamic coverage threshold check"
+	@echo ""
+	@echo "Mutation Testing:"
+	@echo "  mutate        Run mutation tests"
+	@echo "  mutate-html   Run mutation tests with HTML report"
+	@echo "  mutate-browse Interactive mutation test browser"
+	@echo "  mutate-results Show mutation test results"
+	@echo "  mutate-clean  Clean mutation test artifacts"
 	@echo ""
 	@echo "Code Quality:"
 	@echo "  lint          Run linting (black, ruff, mypy)"
@@ -78,6 +85,35 @@ clean:
 	rm -rf .ruff_cache/
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -name "*.pyc" -delete
+
+# Run mutation tests
+mutate:
+	@echo "🦠 Running mutation tests..."
+	mutmut run
+
+# Run mutation tests with HTML report
+mutate-html:
+	@echo "🦠 Running mutation tests with HTML report..."
+	mutmut run
+	mutmut html
+	@echo "📊 HTML report generated in html/"
+
+# Interactive mutation test browser
+mutate-browse:
+	@echo "🔍 Opening interactive mutation test browser..."
+	mutmut browse
+
+# Show mutation test results
+mutate-results:
+	@echo "📋 Mutation test results:"
+	mutmut results
+
+# Clean mutation test artifacts
+mutate-clean:
+	@echo "🧹 Cleaning mutation test artifacts..."
+	rm -rf .mutmut-cache/
+	rm -rf html/
+	rm -f mutmut.log
 
 # Variables for colors
 RESET=\033[0m

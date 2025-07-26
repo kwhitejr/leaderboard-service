@@ -402,11 +402,17 @@ class TestLeaderboardDatabase:
             timestamp=datetime(2024, 1, 15, 10, 30, 0)
         )
         
-        # Verify that score_type is indeed an enum before calling submit_score
-        assert isinstance(score_record.score_type, ScoreType)
+        # Since ScoreRecord uses use_enum_values=True, score_type becomes a string
+        # To test the enum branch in database.py line 35, we need to manually set it back to enum
+        score_record.score_type = ScoreType.FASTEST_TIME  # Force enum for the test
         
         # This should hit line 35: score_type_value = score_type_value.value
         self.db.submit_score(score_record)
+        
+        # Verify the score was stored correctly by retrieving it
+        result = self.db.get_leaderboard("enum_test", ScoreType.FASTEST_TIME, 5)
+        assert len(result) == 1
+        assert result[0].initials == "ENM"
         
         # Verify it was stored correctly with fastest_time logic
         response = self.db.table.get_item(
