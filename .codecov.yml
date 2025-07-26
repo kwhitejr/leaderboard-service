@@ -1,0 +1,56 @@
+# Codecov configuration for leaderboard service
+# This works in conjunction with our dynamic coverage baseline system
+
+codecov:
+  require_ci_to_pass: yes
+  notify:
+    after_n_builds: 1
+
+coverage:
+  precision: 2
+  round: down
+  range: "90...100"
+  
+  status:
+    project:
+      default:
+        # Use a conservative threshold since our dynamic script handles the real enforcement
+        target: 95%
+        threshold: 1%
+        if_not_found: success
+        if_ci_failed: error
+    
+    patch:
+      default:
+        # Require new code to be well-tested
+        target: 95%
+        threshold: 5%
+        if_not_found: success
+        if_ci_failed: error
+
+comment:
+  layout: "reach,diff,flags,files,footer"
+  behavior: default
+  require_changes: false
+  require_base: no
+  require_head: yes
+
+github_checks:
+  annotations: false
+
+ignore:
+  - "tests/"
+  - "**/test_*.py"
+  - "**/__init__.py"
+  - "scripts/"
+  - "terraform/"
+  - ".github/"
+
+flag_management:
+  default_rules:
+    carryforward: true
+    statuses:
+      - name_prefix: "project"
+        type: "project"
+      - name_prefix: "patch"
+        type: "patch"

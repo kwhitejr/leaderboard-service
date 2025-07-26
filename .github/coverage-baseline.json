@@ -1,0 +1,15 @@
+{
+  "baseline_coverage": 96.88,
+  "last_updated": "2025-07-25T23:21:27Z",
+  "commit_hash": "0fe65b0",
+  "branch": "feature/leaderboard-service-implementation",
+  "total_lines": 160,
+  "covered_lines": 155,
+  "test_count": 32,
+  "per_file_coverage": {
+    "src/leaderboard/models.py": 100.0,
+    "src/leaderboard/handler.py": 96.97,
+    "src/leaderboard/database.py": 94.0
+  },
+  "notes": "Initial baseline established after comprehensive test coverage improvements"
+}

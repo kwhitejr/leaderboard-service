@@ -72,6 +72,18 @@ pip install -r requirements-dev.txt
 # Run tests
 pytest tests/ -v
 
+# Run tests with coverage
+pytest tests/ --cov=src --cov-report=term-missing --cov-report=html
+
+# Check coverage against dynamic threshold
+python scripts/check-coverage.py
+
+# Alternative: Use Makefile commands
+make test                 # Run tests
+make coverage            # Run tests with coverage report
+make check-coverage      # Check against dynamic threshold
+make lint                # Run all linting checks
+
 # Run linting
 black src/ tests/
 ruff src/ tests/
@@ -88,9 +100,17 @@ mutmut run
 │   ├── models.py            # Pydantic models
 │   └── database.py          # DynamoDB operations
 ├── tests/                   # Unit tests
+├── scripts/                 # Development scripts
+│   ├── check-coverage.py    # Dynamic coverage threshold checker
+│   └── test-coverage-system.py # Coverage system test suite
+├── .github/                 # GitHub Actions workflows
+│   ├── coverage-baseline.json   # Dynamic coverage baseline
+│   └── workflows/ci.yml     # CI/CD pipeline
 ├── terraform/               # Infrastructure as code
 ├── requirements.txt         # Runtime dependencies
 ├── requirements-dev.txt     # Development dependencies
+├── Makefile                 # Developer commands
+├── .codecov.yml            # Codecov configuration
 └── SCHEMA.md               # Database schema documentation
 ```
 
@@ -101,6 +121,39 @@ The service uses a single DynamoDB table with:
 - **Sort Key**: `sort_key` (format: `{score_type}#{formatted_score}`)
 
 See [SCHEMA.md](SCHEMA.md) for detailed schema design.
+
+## Quality Assurance
+
+### Test Coverage Protection
+
+The project implements a **dynamic ratcheting coverage system** that prevents coverage regression while encouraging improvement:
+
+- **Current Coverage**: 96.88% (32 tests)
+- **Protection**: Coverage can never decrease below the established baseline
+- **Growth**: When coverage improves, the baseline automatically updates
+- **Enforcement**: Both local development and CI/CD pipeline enforcement
+
+#### How It Works
+
+1. **Baseline Tracking**: `.github/coverage-baseline.json` stores the current coverage floor
+2. **Dynamic Checking**: `scripts/check-coverage.py` compares current coverage against baseline
+3. **Automatic Updates**: Baseline increases automatically when coverage improves on main branch
+4. **CI Integration**: GitHub Actions enforces coverage protection on all PRs
+
+#### Developer Workflow
+
+```bash
+# Check coverage locally (same as CI)
+make check-coverage
+
+# Run coverage with detailed report
+make coverage
+
+# Test the coverage system
+python scripts/test-coverage-system.py
+```
+
+The system ensures coverage can only stay the same or improve, creating a ratcheting effect that maintains high code quality standards.
 
 ## Deployment
 
