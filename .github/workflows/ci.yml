@@ -42,7 +42,7 @@ jobs:
       run: |
         export PYTHONPATH=$PWD:$PYTHONPATH
         black --check src/ tests/
-        ruff src/ tests/
+        ruff check src/ tests/
         mypy src/
     
     - name: Run unit tests with dynamic coverage check
