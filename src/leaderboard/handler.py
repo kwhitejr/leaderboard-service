@@ -87,7 +87,7 @@ def get_leaderboard(game_id: str) -> dict[str, Any]:
             ) from ve
 
         try:
-            limit = int(limit_param)
+            limit = int(limit_param) if limit_param else 10
             if limit < 1 or limit > 100:
                 raise ValueError()
         except ValueError as ve:

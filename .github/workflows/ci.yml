@@ -41,9 +41,9 @@ jobs:
     - name: Run linting
       run: |
         export PYTHONPATH=$PWD:$PYTHONPATH
-        black --check src/ tests/
-        ruff check src/ tests/
-        mypy src/
+        python -m black --check src/ tests/
+        python -m ruff check src/ tests/
+        python -m mypy src/
     
     - name: Run unit tests with dynamic coverage check
       run: |

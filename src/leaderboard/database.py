@@ -3,6 +3,7 @@
 import os
 from datetime import datetime
 from decimal import Decimal
+from typing import Dict, Any
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -16,9 +17,12 @@ class LeaderboardDatabase:
 
     def __init__(self, table_name: str | None = None) -> None:
         """Initialize database connection."""
-        self.table_name = table_name or os.environ.get(
+        resolved_table_name = table_name or os.environ.get(
             "LEADERBOARD_TABLE", "leaderboard-scores"
         )
+        if not resolved_table_name:
+            raise ValueError("Table name must be provided")
+        self.table_name = resolved_table_name
         region = os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
         self.dynamodb = boto3.resource("dynamodb", region_name=region)
         self.table = self.dynamodb.Table(self.table_name)
@@ -52,7 +56,7 @@ class LeaderboardDatabase:
 
             sort_key = f"{score_type_value}#{sort_key_score:015.3f}"
 
-            item = {
+            item: Dict[str, Any] = {
                 "game_id": score_record.game_id,
                 "sort_key": sort_key,
                 "initials": score_record.initials,
@@ -90,9 +94,9 @@ class LeaderboardDatabase:
             for rank, item in enumerate(response["Items"], 1):
                 entry = LeaderboardEntry(
                     rank=rank,
-                    initials=item["initials"],
+                    initials=str(item["initials"]),
                     score=float(item["score"]),
-                    timestamp=datetime.fromisoformat(item["timestamp"]),
+                    timestamp=datetime.fromisoformat(str(item["timestamp"])),
                 )
                 leaderboard.append(entry)
 
