@@ -53,7 +53,7 @@ def submit_score() -> dict[str, str]:
             "message": "Score submitted successfully",
             "game_id": submission.game_id,
             "initials": submission.initials,
-            "score": submission.score,
+            "score": str(submission.score),
             "score_type": submission.score_type.value,
         }
 
@@ -113,7 +113,7 @@ def get_leaderboard(game_id: str) -> dict[str, Any]:
             extra={"game_id": game_id, "entries_count": len(leaderboard_entries)},
         )
 
-        return response.model_dump(mode="json")  # type: ignore[no-any-return]
+        return response.model_dump(mode="json")
 
     except ValueError as e:
         logger.warning("Invalid leaderboard request", extra={"error": str(e)})
@@ -129,4 +129,4 @@ def get_leaderboard(game_id: str) -> dict[str, Any]:
 @logger.inject_lambda_context(correlation_id_path=correlation_paths.API_GATEWAY_REST)
 def lambda_handler(event: dict[str, Any], context: LambdaContext) -> dict[str, Any]:
     """Lambda handler entry point."""
-    return app.resolve(event, context)  # type: ignore[no-any-return]
+    return app.resolve(event, context)
