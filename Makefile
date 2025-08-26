@@ -49,37 +49,37 @@ setup-dev:
 # Install dependencies
 install:
 	@echo "📦 Installing dependencies..."
-	pip install --upgrade pip
-	pip install -r requirements.txt -r requirements-dev.txt
+	./venv/bin/pip install --upgrade pip
+	./venv/bin/pip install -r requirements.txt -r requirements-dev.txt
 
 # Run unit tests only
 test:
 	@echo "🧪 Running unit tests..."
-	pytest tests/unit/ -v
+	./venv/bin/pytest tests/unit/ -v
 
 # Run tests with coverage
 coverage:
 	@echo "📊 Running unit tests with coverage..."
-	pytest tests/unit/ --cov=src --cov-report=term-missing --cov-report=html
+	./venv/bin/pytest tests/unit/ --cov=src --cov-report=term-missing --cov-report=html
 	@echo "📈 Coverage report generated in htmlcov/"
 
 # Run dynamic coverage check (same as CI)
 check-coverage:
 	@echo "🎯 Running dynamic coverage threshold check..."
-	python scripts/check-coverage.py
+	./venv/bin/python scripts/check-coverage.py
 
 # Run linting
 lint:
 	@echo "🔍 Running linting checks..."
-	black --check src/ tests/
-	ruff check src/ tests/
-	mypy src/
+	./venv/bin/black --check src/ tests/
+	./venv/bin/ruff check src/ tests/
+	./venv/bin/mypy src/
 
 # Format code
 format:
 	@echo "✨ Formatting code..."
-	black src/ tests/
-	ruff check --fix src/ tests/
+	./venv/bin/black src/ tests/
+	./venv/bin/ruff check --fix src/ tests/
 
 # Clean up
 clean:
@@ -96,24 +96,24 @@ clean:
 # Run mutation tests
 mutate:
 	@echo "🦠 Running mutation tests..."
-	mutmut run
+	./venv/bin/mutmut run
 
 # Run mutation tests with HTML report
 mutate-html:
 	@echo "🦠 Running mutation tests with HTML report..."
-	mutmut run
-	mutmut html
+	./venv/bin/mutmut run
+	./venv/bin/mutmut html
 	@echo "📊 HTML report generated in html/"
 
 # Interactive mutation test browser
 mutate-browse:
 	@echo "🔍 Opening interactive mutation test browser..."
-	mutmut browse
+	./venv/bin/mutmut browse
 
 # Show mutation test results
 mutate-results:
 	@echo "📋 Mutation test results:"
-	mutmut results
+	./venv/bin/mutmut results
 
 # Clean mutation test artifacts
 mutate-clean:
@@ -126,12 +126,12 @@ mutate-clean:
 test-integration:
 	@echo "🐳 Running integration tests (requires Docker)..."
 	@echo "⚠️  This will start LocalStack containers"
-	pytest tests/integration/ -v --tb=short
+	./venv/bin/pytest tests/integration/ -v --tb=short
 
 # Run all tests (unit + integration)
 test-all:
 	@echo "🧪 Running all tests..."
-	pytest tests/ -v --tb=short
+	./venv/bin/pytest tests/ -v --tb=short
 
 # Variables for colors
 RESET=\033[0m
