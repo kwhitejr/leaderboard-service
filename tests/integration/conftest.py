@@ -3,11 +3,10 @@
 import json
 import os
 import time
-from typing import Dict, Generator
+from collections.abc import Generator
 
 import boto3
 import pytest
-import requests
 from testcontainers.localstack import LocalStackContainer
 
 from src.leaderboard.database import LeaderboardDatabase
@@ -25,7 +24,7 @@ def localstack_container() -> Generator[LocalStackContainer, None, None]:
         # Set AWS environment variables for tests
         os.environ["AWS_ENDPOINT_URL"] = localstack.get_url()
         os.environ["AWS_ACCESS_KEY_ID"] = "test"
-        os.environ["AWS_SECRET_ACCESS_KEY"] = "test"
+        os.environ["AWS_SECRET_ACCESS_KEY"] = "test"  # noqa: S105
         os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
 
         yield localstack
@@ -38,7 +37,7 @@ def dynamodb_client(localstack_container: LocalStackContainer):
         "dynamodb",
         endpoint_url=localstack_container.get_url(),
         aws_access_key_id="test",
-        aws_secret_access_key="test",
+        aws_secret_access_key="test",  # noqa: S106
         region_name="us-east-1",
     )
 
@@ -79,8 +78,9 @@ def dynamodb_table(dynamodb_client, localstack_container: LocalStackContainer):
     # Cleanup
     try:
         dynamodb_client.delete_table(TableName=table_name)
-    except:
-        pass
+    except Exception:
+        # Cleanup failed, but continue - this is expected during teardown
+        pass  # noqa: S110
 
 
 @pytest.fixture
@@ -99,7 +99,7 @@ def leaderboard_db(dynamodb_table: str, localstack_container: LocalStackContaine
         "dynamodb",
         endpoint_url=localstack_container.get_url(),
         aws_access_key_id="test",
-        aws_secret_access_key="test",
+        aws_secret_access_key="test",  # noqa: S106
         region_name="us-east-1",
     )
     db.table = db.dynamodb.Table(dynamodb_table)
@@ -116,7 +116,8 @@ def leaderboard_db(dynamodb_table: str, localstack_container: LocalStackContaine
                     Key={"game_id": item["game_id"], "sort_key": item["sort_key"]}
                 )
     except Exception:
-        pass
+        # Cleanup failed, but continue - this is expected during teardown
+        pass  # noqa: S110
 
     # Restore original table name
     if original_table_name:
@@ -124,7 +125,7 @@ def leaderboard_db(dynamodb_table: str, localstack_container: LocalStackContaine
 
 
 @pytest.fixture
-def api_gateway_event_template() -> Dict:
+def api_gateway_event_template() -> dict:
     """Template for API Gateway event structure."""
     return {
         "resource": "",
@@ -176,7 +177,7 @@ def api_gateway_event_template() -> Dict:
 
 
 @pytest.fixture
-def sample_score_data() -> Dict:
+def sample_score_data() -> dict:
     """Sample score submission data for tests."""
     return {
         "game_id": "integration_test_game",
@@ -209,11 +210,11 @@ def lambda_context():
 def create_api_event(
     method: str,
     path: str,
-    body: Dict = None,
-    query_params: Dict = None,
-    path_params: Dict = None,
-    template: Dict = None,
-) -> Dict:
+    body: dict = None,
+    query_params: dict = None,
+    path_params: dict = None,
+    template: dict = None,
+) -> dict:
     """Helper function to create API Gateway events."""
     if template is None:
         # Create a basic template if none provided

@@ -3,7 +3,6 @@
 import os
 from datetime import datetime
 from decimal import Decimal
-from typing import List, Optional
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -15,7 +14,7 @@ from .models import LeaderboardEntry, ScoreRecord, ScoreType
 class LeaderboardDatabase:
     """DynamoDB operations for leaderboard data."""
 
-    def __init__(self, table_name: Optional[str] = None) -> None:
+    def __init__(self, table_name: str | None = None) -> None:
         """Initialize database connection."""
         self.table_name = table_name or os.environ.get(
             "LEADERBOARD_TABLE", "leaderboard-scores"
@@ -62,11 +61,11 @@ class LeaderboardDatabase:
             self.table.put_item(Item=item)
 
         except ClientError as e:
-            raise RuntimeError(f"Failed to submit score: {e}")
+            raise RuntimeError(f"Failed to submit score: {e}") from e
 
     def get_leaderboard(
         self, game_id: str, score_type: ScoreType, limit: int = 10
-    ) -> List[LeaderboardEntry]:
+    ) -> list[LeaderboardEntry]:
         """Get leaderboard for a game and score type."""
         try:
             # Handle both enum and string values for score_type
@@ -95,9 +94,9 @@ class LeaderboardDatabase:
             return leaderboard
 
         except ClientError as e:
-            raise RuntimeError(f"Failed to get leaderboard: {e}")
+            raise RuntimeError(f"Failed to get leaderboard: {e}") from e
 
-    def get_all_score_types_for_game(self, game_id: str) -> List[ScoreType]:
+    def get_all_score_types_for_game(self, game_id: str) -> list[ScoreType]:
         """Get all score types that exist for a game."""
         try:
             response = self.table.query(
@@ -112,4 +111,4 @@ class LeaderboardDatabase:
             return list(score_types)
 
         except ClientError as e:
-            raise RuntimeError(f"Failed to get score types: {e}")
+            raise RuntimeError(f"Failed to get score types: {e}") from e

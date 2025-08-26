@@ -2,7 +2,6 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import List
 
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
@@ -74,6 +73,6 @@ class LeaderboardResponse(BaseModel):
 
     game_id: str
     score_type: ScoreType
-    leaderboard: List[LeaderboardEntry]
+    leaderboard: list[LeaderboardEntry]
 
     model_config = ConfigDict(use_enum_values=True)

@@ -6,8 +6,7 @@ routing, parameter parsing, and response serialization.
 """
 
 import json
-import pytest
-from typing import Dict, Any
+from typing import Any
 
 from src.leaderboard.handler import lambda_handler
 from tests.integration.conftest import create_api_event
@@ -17,7 +16,7 @@ class TestAPIGatewayIntegration:
     """Test API Gateway + Lambda integration."""
 
     def test_submit_score_success(
-        self, leaderboard_db, lambda_context, sample_score_data: Dict[str, Any]
+        self, leaderboard_db, lambda_context, sample_score_data: dict[str, Any]
     ):
         """Test successful score submission via API Gateway."""
         # Create API Gateway event for POST /games/scores/v1

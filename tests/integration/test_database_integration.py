@@ -6,9 +6,6 @@ and error handling scenarios.
 """
 
 import pytest
-from decimal import Decimal
-from datetime import datetime, timezone
-from typing import List
 
 from src.leaderboard.models import ScoreRecord, ScoreType
 from src.leaderboard.database import LeaderboardDatabase
@@ -407,7 +404,6 @@ class TestDatabaseIntegration:
         original_table = leaderboard_db.table
 
         # Create a mock table that will cause errors
-        import boto3
         from unittest.mock import Mock
 
         # Mock a table that raises ClientError on operations

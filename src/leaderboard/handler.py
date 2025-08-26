@@ -1,7 +1,7 @@
 """Lambda handler for leaderboard service."""
 
-from datetime import datetime, timezone
-from typing import Any, Dict
+from datetime import datetime
+from typing import Any
 
 from aws_lambda_powertools import Logger
 from aws_lambda_powertools.event_handler import APIGatewayRestResolver
@@ -19,13 +19,13 @@ db = LeaderboardDatabase()
 
 
 @app.get("/health")
-def health_check() -> Dict[str, str]:
+def health_check() -> dict[str, str]:
     """Health check endpoint."""
     return {"status": "healthy", "service": "leaderboard"}
 
 
 @app.post("/games/scores/v1")
-def submit_score() -> Dict[str, str]:
+def submit_score() -> dict[str, str]:
     """Submit a score to the leaderboard."""
     try:
         # Parse and validate request body
@@ -40,7 +40,7 @@ def submit_score() -> Dict[str, str]:
             initials=submission.initials,
             score=submission.score,
             score_type=submission.score_type,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(datetime.UTC),
         )
 
         # Submit to database
@@ -59,7 +59,7 @@ def submit_score() -> Dict[str, str]:
 
     except ValidationError as e:
         logger.warning("Invalid score submission", extra={"errors": e.errors()})
-        raise BadRequestError(f"Invalid request: {e}")
+        raise BadRequestError(f"Invalid request: {e}") from e
     except RuntimeError as e:
         logger.error("Database error", extra={"error": str(e)})
         raise
@@ -69,7 +69,7 @@ def submit_score() -> Dict[str, str]:
 
 
 @app.get("/games/leaderboards/v1/<game_id>")
-def get_leaderboard(game_id: str) -> Dict[str, Any]:
+def get_leaderboard(game_id: str) -> dict[str, Any]:
     """Get leaderboard for a specific game."""
     try:
         # Get query parameters
@@ -81,17 +81,19 @@ def get_leaderboard(game_id: str) -> Dict[str, Any]:
         # Validate parameters
         try:
             score_type = ScoreType(score_type_param)
-        except ValueError:
+        except ValueError as ve:
             raise BadRequestError(
                 f"Invalid score_type: {score_type_param}. Must be one of: {[t.value for t in ScoreType]}"
-            )
+            ) from ve
 
         try:
             limit = int(limit_param)
             if limit < 1 or limit > 100:
                 raise ValueError()
-        except ValueError:
-            raise BadRequestError("Invalid limit: must be an integer between 1 and 100")
+        except ValueError as ve:
+            raise BadRequestError(
+                "Invalid limit: must be an integer between 1 and 100"
+            ) from ve
 
         logger.info(
             "Leaderboard request",
@@ -115,7 +117,7 @@ def get_leaderboard(game_id: str) -> Dict[str, Any]:
 
     except ValueError as e:
         logger.warning("Invalid leaderboard request", extra={"error": str(e)})
-        raise BadRequestError(str(e))
+        raise BadRequestError(str(e)) from e
     except RuntimeError as e:
         logger.error("Database error", extra={"error": str(e)})
         raise
@@ -125,6 +127,6 @@ def get_leaderboard(game_id: str) -> Dict[str, Any]:
 
 
 @logger.inject_lambda_context(correlation_id_path=correlation_paths.API_GATEWAY_REST)
-def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
+def lambda_handler(event: dict[str, Any], context: LambdaContext) -> dict[str, Any]:
     """Lambda handler entry point."""
     return app.resolve(event, context)

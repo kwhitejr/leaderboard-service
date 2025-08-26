@@ -6,8 +6,6 @@ and retrieval with real AWS services in LocalStack.
 """
 
 import json
-import pytest
-from typing import List, Dict, Any
 
 from src.leaderboard.handler import lambda_handler
 from tests.integration.conftest import create_api_event

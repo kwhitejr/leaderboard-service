@@ -1,11 +1,11 @@
 """Tests for leaderboard database operations."""
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 import boto3
 from moto import mock_aws
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from botocore.exceptions import ClientError
 
 from src.leaderboard.database import LeaderboardDatabase
@@ -20,7 +20,7 @@ class TestLeaderboardDatabase:
         """Set up test fixtures."""
         # Create the DynamoDB table for testing
         dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
-        table = dynamodb.create_table(
+        dynamodb.create_table(
             TableName="test-table",
             KeySchema=[
                 {"AttributeName": "game_id", "KeyType": "HASH"},
