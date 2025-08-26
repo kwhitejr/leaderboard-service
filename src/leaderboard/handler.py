@@ -1,6 +1,6 @@
 """Lambda handler for leaderboard service."""
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from aws_lambda_powertools import Logger
@@ -40,7 +40,7 @@ def submit_score() -> dict[str, str]:
             initials=submission.initials,
             score=submission.score,
             score_type=submission.score_type,
-            timestamp=datetime.now(datetime.UTC),
+            timestamp=datetime.now(UTC),
         )
 
         # Submit to database
@@ -113,7 +113,7 @@ def get_leaderboard(game_id: str) -> dict[str, Any]:
             extra={"game_id": game_id, "entries_count": len(leaderboard_entries)},
         )
 
-        return response.model_dump(mode="json")
+        return response.model_dump(mode="json")  # type: ignore[no-any-return]
 
     except ValueError as e:
         logger.warning("Invalid leaderboard request", extra={"error": str(e)})
@@ -129,4 +129,4 @@ def get_leaderboard(game_id: str) -> dict[str, Any]:
 @logger.inject_lambda_context(correlation_id_path=correlation_paths.API_GATEWAY_REST)
 def lambda_handler(event: dict[str, Any], context: LambdaContext) -> dict[str, Any]:
     """Lambda handler entry point."""
-    return app.resolve(event, context)
+    return app.resolve(event, context)  # type: ignore[no-any-return]

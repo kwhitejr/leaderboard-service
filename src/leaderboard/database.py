@@ -31,9 +31,11 @@ class LeaderboardDatabase:
             # For longest_time: use negative score for descending order
 
             # Handle both enum and string values for score_type
-            score_type_value = score_record.score_type
-            if isinstance(score_type_value, ScoreType):
-                score_type_value = score_type_value.value
+            score_type_value: str
+            if isinstance(score_record.score_type, ScoreType):
+                score_type_value = score_record.score_type.value
+            else:
+                score_type_value = str(score_record.score_type)
 
             if score_type_value == ScoreType.FASTEST_TIME.value:
                 # For fastest time, lower is better, so use positive score for ascending order
@@ -69,9 +71,11 @@ class LeaderboardDatabase:
         """Get leaderboard for a game and score type."""
         try:
             # Handle both enum and string values for score_type
-            score_type_value = score_type
-            if isinstance(score_type_value, ScoreType):
-                score_type_value = score_type_value.value
+            score_type_value: str
+            if isinstance(score_type, ScoreType):
+                score_type_value = score_type.value
+            else:
+                score_type_value = str(score_type)
 
             # Query with begins_with to get all scores for this type
             response = self.table.query(
