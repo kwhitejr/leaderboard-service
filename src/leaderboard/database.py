@@ -3,7 +3,7 @@
 import os
 from datetime import datetime
 from decimal import Decimal
-from typing import Dict, Any
+from typing import Any
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -56,7 +56,7 @@ class LeaderboardDatabase:
 
             sort_key = f"{score_type_value}#{sort_key_score:015.3f}"
 
-            item: Dict[str, Any] = {
+            item: dict[str, Any] = {
                 "game_id": score_record.game_id,
                 "sort_key": sort_key,
                 "initials": score_record.initials,
