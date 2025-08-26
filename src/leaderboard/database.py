@@ -95,7 +95,7 @@ class LeaderboardDatabase:
                 entry = LeaderboardEntry(
                     rank=rank,
                     initials=str(item["initials"]),
-                    score=float(item["score"]),
+                    score=float(str(item["score"])),
                     timestamp=datetime.fromisoformat(str(item["timestamp"])),
                 )
                 leaderboard.append(entry)
