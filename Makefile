@@ -55,12 +55,12 @@ install:
 # Run unit tests only
 test:
 	@echo "🧪 Running unit tests..."
-	./venv/bin/pytest tests/unit/ -v
+	PYTHONPATH=$(PWD) ./venv/bin/pytest tests/unit/ -v
 
 # Run tests with coverage
 coverage:
 	@echo "📊 Running unit tests with coverage..."
-	./venv/bin/pytest tests/unit/ --cov=src --cov-report=term-missing --cov-report=html
+	PYTHONPATH=$(PWD) ./venv/bin/pytest tests/unit/ --cov=src --cov-report=term-missing --cov-report=html
 	@echo "📈 Coverage report generated in htmlcov/"
 
 # Run dynamic coverage check (same as CI)
@@ -126,12 +126,12 @@ mutate-clean:
 test-integration:
 	@echo "🐳 Running integration tests (requires Docker)..."
 	@echo "⚠️  This will start LocalStack containers"
-	./venv/bin/pytest tests/integration/ -v --tb=short
+	PYTHONPATH=$(PWD) ./venv/bin/pytest tests/integration/ -v --tb=short
 
 # Run all tests (unit + integration)
 test-all:
 	@echo "🧪 Running all tests..."
-	./venv/bin/pytest tests/ -v --tb=short
+	PYTHONPATH=$(PWD) ./venv/bin/pytest tests/ -v --tb=short
 
 # Variables for colors
 RESET=\033[0m

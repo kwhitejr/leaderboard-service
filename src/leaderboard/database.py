@@ -19,7 +19,8 @@ class LeaderboardDatabase:
         self.table_name = table_name or os.environ.get(
             "LEADERBOARD_TABLE", "leaderboard-scores"
         )
-        self.dynamodb = boto3.resource("dynamodb")
+        region = os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
+        self.dynamodb = boto3.resource("dynamodb", region_name=region)
         self.table = self.dynamodb.Table(self.table_name)
 
     def submit_score(self, score_record: ScoreRecord) -> None:
