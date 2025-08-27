@@ -140,6 +140,7 @@ celerybeat.pid
 .venv
 env/
 venv/
+test_venv/
 ENV/
 env.bak/
 venv.bak/
@@ -205,3 +206,18 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+*.tfplan
+
+# AWS
+.aws/
+
+# Deployment packages
+lambda_function.zip
+*.zip
