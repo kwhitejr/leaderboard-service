@@ -201,3 +201,80 @@ resource "aws_api_gateway_integration" "lambda_integration" {
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.leaderboard_function.invoke_arn
 }
+
+# Route53 Zone (assuming it already exists)
+data "aws_route53_zone" "main" {
+  name         = "kwhitejr.com"
+  private_zone = false
+}
+
+# SSL Certificate for API domain
+resource "aws_acm_certificate" "api_cert" {
+  domain_name       = var.api_domain_name
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = var.tags
+}
+
+# Certificate validation
+resource "aws_route53_record" "api_cert_validation" {
+  for_each = {
+    for dvo in aws_acm_certificate.api_cert.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.main.zone_id
+}
+
+resource "aws_acm_certificate_validation" "api_cert_validation" {
+  certificate_arn         = aws_acm_certificate.api_cert.arn
+  validation_record_fqdns = [for record in aws_route53_record.api_cert_validation : record.fqdn]
+
+  timeouts {
+    create = "5m"
+  }
+}
+
+# API Gateway Custom Domain
+resource "aws_api_gateway_domain_name" "api_domain" {
+  domain_name     = var.api_domain_name
+  certificate_arn = aws_acm_certificate_validation.api_cert_validation.certificate_arn
+
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
+
+  tags = var.tags
+}
+
+# API Gateway Base Path Mapping
+resource "aws_api_gateway_base_path_mapping" "api_mapping" {
+  api_id      = aws_api_gateway_rest_api.leaderboard_api.id
+  stage_name  = aws_api_gateway_deployment.leaderboard_deployment.stage_name
+  domain_name = aws_api_gateway_domain_name.api_domain.domain_name
+}
+
+# Route53 A record for API domain
+resource "aws_route53_record" "api_domain" {
+  name    = aws_api_gateway_domain_name.api_domain.domain_name
+  type    = "A"
+  zone_id = data.aws_route53_zone.main.zone_id
+
+  alias {
+    evaluate_target_health = true
+    name                   = aws_api_gateway_domain_name.api_domain.regional_domain_name
+    zone_id                = aws_api_gateway_domain_name.api_domain.regional_zone_id
+  }
+}

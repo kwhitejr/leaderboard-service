@@ -17,3 +17,13 @@ output "api_gateway_rest_api_id" {
   description = "ID of the API Gateway REST API"
   value       = aws_api_gateway_rest_api.leaderboard_api.id
 }
+
+output "custom_domain_name" {
+  description = "Custom domain name for the API"
+  value       = aws_api_gateway_domain_name.api_domain.domain_name
+}
+
+output "custom_domain_target" {
+  description = "Target domain name for the custom domain"
+  value       = aws_api_gateway_domain_name.api_domain.regional_domain_name
+}
