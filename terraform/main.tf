@@ -150,11 +150,17 @@ resource "aws_api_gateway_deployment" "leaderboard_deployment" {
   ]
 
   rest_api_id = aws_api_gateway_rest_api.leaderboard_api.id
-  stage_name  = var.environment
 
   lifecycle {
     create_before_destroy = true
   }
+}
+
+# API Gateway stage
+resource "aws_api_gateway_stage" "leaderboard_stage" {
+  deployment_id = aws_api_gateway_deployment.leaderboard_deployment.id
+  rest_api_id   = aws_api_gateway_rest_api.leaderboard_api.id
+  stage_name    = var.environment
 }
 
 # Proxy resource
@@ -208,8 +214,9 @@ data "aws_route53_zone" "main" {
   private_zone = false
 }
 
-# SSL Certificate for API domain
+# SSL Certificate for API domain (regional)
 resource "aws_acm_certificate" "api_cert" {
+  provider          = aws
   domain_name       = var.api_domain_name
   validation_method = "DNS"
 
@@ -249,8 +256,8 @@ resource "aws_acm_certificate_validation" "api_cert_validation" {
 
 # API Gateway Custom Domain
 resource "aws_api_gateway_domain_name" "api_domain" {
-  domain_name     = var.api_domain_name
-  certificate_arn = aws_acm_certificate_validation.api_cert_validation.certificate_arn
+  domain_name              = var.api_domain_name
+  regional_certificate_arn = aws_acm_certificate_validation.api_cert_validation.certificate_arn
 
   endpoint_configuration {
     types = ["REGIONAL"]
@@ -262,7 +269,7 @@ resource "aws_api_gateway_domain_name" "api_domain" {
 # API Gateway Base Path Mapping
 resource "aws_api_gateway_base_path_mapping" "api_mapping" {
   api_id      = aws_api_gateway_rest_api.leaderboard_api.id
-  stage_name  = aws_api_gateway_deployment.leaderboard_deployment.stage_name
+  stage_name  = aws_api_gateway_stage.leaderboard_stage.stage_name
   domain_name = aws_api_gateway_domain_name.api_domain.domain_name
 }
 
