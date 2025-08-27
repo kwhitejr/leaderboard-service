@@ -1,6 +1,6 @@
 # Leaderboard Service Development Makefile
 
-.PHONY: help install test coverage check-coverage lint format clean setup-dev mutate mutate-html mutate-browse mutate-results mutate-clean test-integration test-integration-only test-all
+.PHONY: help install test coverage check-coverage lint format clean setup-dev mutate mutate-html mutate-browse mutate-results mutate-clean
 
 # Default target
 help:
@@ -12,9 +12,7 @@ help:
 	@echo "  install       Install dependencies"
 	@echo ""
 	@echo "Testing:"
-	@echo "  test          Run unit tests only"
-	@echo "  test-integration Run integration tests (requires Docker)"
-	@echo "  test-all      Run both unit and integration tests"
+	@echo "  test          Run unit tests"
 	@echo "  coverage      Run tests with coverage report"
 	@echo "  check-coverage Run dynamic coverage threshold check"
 	@echo ""
@@ -52,7 +50,7 @@ install:
 	./venv/bin/pip install --upgrade pip
 	./venv/bin/pip install -r requirements.txt -r requirements-dev.txt
 
-# Run unit tests only
+# Run unit tests
 test:
 	@echo "🧪 Running unit tests..."
 	PYTHONPATH=$(PWD) ./venv/bin/pytest tests/unit/ -v
@@ -122,16 +120,6 @@ mutate-clean:
 	rm -rf html/
 	rm -f mutmut.log
 
-# Run integration tests
-test-integration:
-	@echo "🐳 Running integration tests (requires Docker)..."
-	@echo "⚠️  This will start LocalStack containers"
-	PYTHONPATH=$(PWD) ./venv/bin/pytest tests/integration/ -v --tb=short
-
-# Run all tests (unit + integration)
-test-all:
-	@echo "🧪 Running all tests..."
-	PYTHONPATH=$(PWD) ./venv/bin/pytest tests/ -v --tb=short
 
 # Variables for colors
 RESET=\033[0m
