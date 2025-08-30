@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from moto import mock_aws
 
-from src.leaderboard.models import LeaderboardEntry, ScoreType
+from src.leaderboard.models import LabelType, LeaderboardEntry, ScoreType
 
 
 @mock_aws
@@ -48,7 +48,8 @@ class TestHandler:
         mock_service.submit_score.return_value = {
             "message": "Score submitted successfully",
             "game_id": "snake_classic",
-            "initials": "KMW",
+            "label": "KMW",
+            "label_type": "initials",
             "score": "103.0",
             "score_type": "high_score",
         }
@@ -60,7 +61,7 @@ class TestHandler:
             "path": "/leaderboard/scores/v1",
             "headers": {"Content-Type": "application/json"},
             "queryStringParameters": None,
-            "body": '{"game_id": "snake_classic", "initials": "KMW", "score": 103.0, "score_type": "high_score"}',
+            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "initials", "score": 103.0, "score_type": "high_score"}',
         }
 
         # Execute
@@ -73,7 +74,7 @@ class TestHandler:
         # Verify the submission passed to service
         call_args = mock_service.submit_score.call_args[0][0]
         assert call_args.game_id == "snake_classic"
-        assert call_args.initials == "KMW"
+        assert call_args.label == "KMW"
         assert call_args.score == 103.0
         assert call_args.score_type == ScoreType.HIGH_SCORE
 
@@ -87,7 +88,7 @@ class TestHandler:
             "path": "/leaderboard/scores/v1",
             "headers": {"Content-Type": "application/json"},
             "queryStringParameters": None,
-            "body": '{"game_id": "snake_classic", "initials": "KMW", "score": -10, "score_type": "high_score"}',
+            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "initials", "score": -10, "score_type": "high_score"}',
         }
 
         # Execute
@@ -106,13 +107,15 @@ class TestHandler:
         mock_entries = [
             LeaderboardEntry(
                 rank=1,
-                initials="KMW",
+                label="KMW",
+                label_type=LabelType.INITIALS,
                 score=103.0,
                 timestamp=datetime(2024, 1, 15, 10, 30, 0),
             ),
             LeaderboardEntry(
                 rank=2,
-                initials="AMY",
+                label="AMY",
+                label_type=LabelType.INITIALS,
                 score=95.0,
                 timestamp=datetime(2024, 1, 14, 15, 20, 0),
             ),
@@ -199,7 +202,7 @@ class TestHandler:
             "path": "/leaderboard/scores/v1",
             "headers": {"Content-Type": "application/json"},
             "queryStringParameters": None,
-            "body": '{"game_id": "snake_classic", "initials": "KMW", "score": 103.0, "score_type": "high_score"}',
+            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "initials", "score": 103.0, "score_type": "high_score"}',
         }
 
         # Execute and verify it raises the RuntimeError
@@ -219,7 +222,7 @@ class TestHandler:
             "path": "/leaderboard/scores/v1",
             "headers": {"Content-Type": "application/json"},
             "queryStringParameters": None,
-            "body": '{"game_id": "snake_classic", "initials": "KMW", "score": 103.0, "score_type": "high_score"}',
+            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "initials", "score": 103.0, "score_type": "high_score"}',
         }
 
         # Execute and verify it raises the Exception

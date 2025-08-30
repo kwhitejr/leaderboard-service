@@ -14,25 +14,40 @@ class ScoreType(str, Enum):
     LONGEST_TIME = "longest_time"
 
 
+class LabelType(str, Enum):
+    """Supported label types for player identification."""
+
+    INITIALS = "initials"
+    USERNAME = "username"
+    TEAM_NAME = "team_name"
+    CUSTOM = "custom"
+
+
 class ScoreSubmission(BaseModel):
     """Model for score submission requests."""
 
     game_id: str = Field(
         ..., min_length=1, max_length=50, description="Game identifier"
     )
-    initials: str = Field(
-        ..., min_length=1, max_length=3, description="Player initials"
+    label: str = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="Player identifier (username, team name, etc.)",
+    )
+    label_type: LabelType = Field(
+        default=LabelType.CUSTOM, description="Type of player label"
     )
     score: float = Field(..., ge=0, description="Score value")
     score_type: ScoreType = Field(..., description="Type of score")
 
-    @field_validator("initials")
+    @field_validator("label")
     @classmethod
-    def validate_initials(cls, v: str) -> str:
-        """Validate initials are alphanumeric and uppercase."""
-        v = v.upper().strip()
-        if not v.isalnum():
-            raise ValueError("Initials must be alphanumeric")
+    def validate_label(cls, v: str) -> str:
+        """Validate label format."""
+        v = v.strip()
+        if not v:
+            raise ValueError("Label cannot be empty")
         return v
 
     @field_validator("game_id")
@@ -51,7 +66,8 @@ class ScoreRecord(BaseModel):
     """Model for stored score records."""
 
     game_id: str
-    initials: str
+    label: str
+    label_type: LabelType
     score: float
     score_type: ScoreType
     timestamp: datetime
@@ -63,7 +79,8 @@ class LeaderboardEntry(BaseModel):
     """Model for leaderboard entries in responses."""
 
     rank: int = Field(..., ge=1, description="Rank position")
-    initials: str
+    label: str
+    label_type: LabelType
     score: float
     timestamp: datetime
 

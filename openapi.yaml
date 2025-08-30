@@ -59,9 +59,12 @@ paths:
                   game_id:
                     type: string
                     example: "pac-man"
-                  initials:
+                  label:
                     type: string
-                    example: "ABC"
+                    example: "PlayerOne"
+                  label_type:
+                    $ref: '#/components/schemas/LabelType'
+                    example: "username"
                   score:
                     type: string
                     example: "12500"
@@ -70,7 +73,8 @@ paths:
                 required:
                   - message
                   - game_id
-                  - initials
+                  - label
+                  - label_type
                   - score
                   - score_type
         '400':
@@ -134,11 +138,25 @@ components:
         - fastest_time: Lower values are better (e.g., race times)
         - longest_time: Higher values are better (e.g., survival time)
 
+    LabelType:
+      type: string
+      enum:
+        - initials
+        - username
+        - team_name
+        - custom
+      description: |
+        Type of player label:
+        - initials: Traditional 3-character initials
+        - username: Player username or handle
+        - team_name: Team or group name
+        - custom: Any other identifier type
+
     ScoreSubmission:
       type: object
       required:
         - game_id
-        - initials
+        - label
         - score
         - score_type
       properties:
@@ -149,13 +167,16 @@ components:
           pattern: '^[a-zA-Z0-9_-]+$'
           description: Game identifier (alphanumeric, hyphens, underscores only)
           example: "pac-man"
-        initials:
+        label:
           type: string
           minLength: 1
-          maxLength: 3
-          pattern: '^[A-Z0-9]+$'
-          description: Player initials (alphanumeric, uppercase)
-          example: "ABC"
+          maxLength: 100
+          description: Player identifier (initials, username, team name, etc.)
+          example: "PlayerOne"
+        label_type:
+          $ref: '#/components/schemas/LabelType'
+          default: "custom"
+          description: Type of player label (defaults to custom if not specified)
         score:
           type: number
           format: float
@@ -169,7 +190,8 @@ components:
       type: object
       required:
         - rank
-        - initials
+        - label
+        - label_type
         - score
         - timestamp
       properties:
@@ -178,10 +200,13 @@ components:
           minimum: 1
           description: Rank position on the leaderboard
           example: 1
-        initials:
+        label:
           type: string
-          description: Player initials
-          example: "ABC"
+          description: Player identifier
+          example: "PlayerOne"
+        label_type:
+          $ref: '#/components/schemas/LabelType'
+          description: Type of player label
         score:
           type: number
           format: float
@@ -256,32 +281,50 @@ components:
 
   examples:
     HighScoreSubmission:
-      summary: Submit a high score
+      summary: Submit a high score with username
       value:
         game_id: "pac-man"
-        initials: "ABC"
+        label: "PlayerOne"
+        label_type: "username"
         score: 12500
         score_type: "high_score"
 
     FastestTimeSubmission:
-      summary: Submit a fastest time
+      summary: Submit a fastest time with initials
       value:
         game_id: "race-game"
-        initials: "XYZ"
+        label: "XYZ"
+        label_type: "initials"
         score: 125.5
         score_type: "fastest_time"
+        
+    TeamScoreSubmission:
+      summary: Submit a team score
+      value:
+        game_id: "team-game"
+        label: "Blue Team"
+        label_type: "team_name"
+        score: 8500
+        score_type: "high_score"
 
     LeaderboardExample:
-      summary: Sample leaderboard response
+      summary: Sample leaderboard response with mixed label types
       value:
         game_id: "pac-man"
         score_type: "high_score"
         leaderboard:
           - rank: 1
-            initials: "ABC"
+            label: "PlayerOne"
+            label_type: "username"
             score: 12500
             timestamp: "2024-01-15T10:30:00Z"
           - rank: 2
-            initials: "XYZ"
+            label: "ABC"
+            label_type: "initials"
             score: 11000
             timestamp: "2024-01-15T09:15:00Z"
+          - rank: 3
+            label: "Red Team"
+            label_type: "team_name"
+            score: 9500
+            timestamp: "2024-01-15T08:45:00Z"

@@ -33,7 +33,8 @@ class LeaderboardService:
         # Create score record with timestamp
         score_record = ScoreRecord(
             game_id=submission.game_id,
-            initials=submission.initials,
+            label=submission.label,
+            label_type=submission.label_type,
             score=submission.score,
             score_type=submission.score_type,
             timestamp=datetime.now(UTC),
@@ -45,7 +46,8 @@ class LeaderboardService:
         return {
             "message": "Score submitted successfully",
             "game_id": submission.game_id,
-            "initials": submission.initials,
+            "label": submission.label,
+            "label_type": submission.label_type.value,
             "score": str(submission.score),
             "score_type": submission.score_type.value,
         }

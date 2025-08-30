@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.leaderboard.models import (
+    LabelType,
     LeaderboardEntry,
     LeaderboardResponse,
     ScoreRecord,
@@ -33,7 +34,8 @@ class TestLeaderboardService:
         # Create test submission
         submission = ScoreSubmission(
             game_id="snake_classic",
-            initials="KMW",
+            label="KMW",
+            label_type=LabelType.INITIALS,
             score=103.0,
             score_type=ScoreType.HIGH_SCORE,
         )
@@ -51,7 +53,8 @@ class TestLeaderboardService:
 
         assert isinstance(call_args, ScoreRecord)
         assert call_args.game_id == "snake_classic"
-        assert call_args.initials == "KMW"
+        assert call_args.label == "KMW"
+        assert call_args.label_type == LabelType.INITIALS
         assert call_args.score == 103.0
         assert call_args.score_type == ScoreType.HIGH_SCORE
         assert call_args.timestamp == fixed_time
@@ -60,7 +63,8 @@ class TestLeaderboardService:
         expected_result = {
             "message": "Score submitted successfully",
             "game_id": "snake_classic",
-            "initials": "KMW",
+            "label": "KMW",
+            "label_type": "initials",
             "score": "103.0",
             "score_type": "high_score",
         }
@@ -71,7 +75,8 @@ class TestLeaderboardService:
         # Setup
         submission = ScoreSubmission(
             game_id="snake_classic",
-            initials="KMW",
+            label="KMW",
+            label_type=LabelType.INITIALS,
             score=103.0,
             score_type=ScoreType.HIGH_SCORE,
         )
@@ -90,13 +95,15 @@ class TestLeaderboardService:
         mock_entries = [
             LeaderboardEntry(
                 rank=1,
-                initials="KMW",
+                label="KMW",
+                label_type=LabelType.INITIALS,
                 score=103.0,
                 timestamp=datetime(2024, 1, 15, 10, 30, 0, tzinfo=UTC),
             ),
             LeaderboardEntry(
                 rank=2,
-                initials="AMY",
+                label="AMY",
+                label_type=LabelType.INITIALS,
                 score=95.0,
                 timestamp=datetime(2024, 1, 14, 15, 20, 0, tzinfo=UTC),
             ),
@@ -161,7 +168,11 @@ class TestLeaderboardService:
             self.mock_database.reset_mock()
 
             submission = ScoreSubmission(
-                game_id="test_game", initials="TST", score=50.0, score_type=score_type
+                game_id="test_game",
+                label="TST",
+                label_type=LabelType.INITIALS,
+                score=50.0,
+                score_type=score_type,
             )
 
             result = self.service.submit_score(submission)
@@ -178,7 +189,11 @@ class TestLeaderboardService:
         # Setup mock response
         mock_entries = [
             LeaderboardEntry(
-                rank=1, initials="TST", score=100.0, timestamp=datetime.now(UTC)
+                rank=1,
+                label="TST",
+                label_type=LabelType.INITIALS,
+                score=100.0,
+                timestamp=datetime.now(UTC),
             )
         ]
         self.mock_database.get_leaderboard.return_value = mock_entries
@@ -223,7 +238,8 @@ class TestLeaderboardService:
         """Test that score submission preserves all original data correctly."""
         submission = ScoreSubmission(
             game_id="complex-game_name-123",
-            initials="ABC",
+            label="ABC",
+            label_type=LabelType.INITIALS,
             score=999.999,
             score_type=ScoreType.LONGEST_TIME,
         )
@@ -237,13 +253,13 @@ class TestLeaderboardService:
         # Verify all data is preserved correctly
         call_args = self.mock_database.submit_score.call_args[0][0]
         assert call_args.game_id == "complex-game_name-123"
-        assert call_args.initials == "ABC"
+        assert call_args.label == "ABC"
         assert call_args.score == 999.999
         assert call_args.score_type == ScoreType.LONGEST_TIME
         assert call_args.timestamp == fixed_time
 
         # Verify response contains correct data
         assert result["game_id"] == "complex-game_name-123"
-        assert result["initials"] == "ABC"
+        assert result["label"] == "ABC"
         assert result["score"] == "999.999"
         assert result["score_type"] == "longest_time"

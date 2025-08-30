@@ -9,7 +9,7 @@ import boto3
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 
-from .models import LeaderboardEntry, ScoreRecord, ScoreType
+from .models import LeaderboardEntry, ScoreRecord, ScoreType, LabelType
 
 
 class LeaderboardDatabase:
@@ -56,10 +56,18 @@ class LeaderboardDatabase:
 
             sort_key = f"{score_type_value}#{sort_key_score:015.3f}"
 
+            # Handle both enum and string values for label_type
+            label_type_value: str
+            if isinstance(score_record.label_type, LabelType):
+                label_type_value = score_record.label_type.value
+            else:
+                label_type_value = str(score_record.label_type)
+
             item: dict[str, Any] = {
                 "game_id": score_record.game_id,
                 "sort_key": sort_key,
-                "initials": score_record.initials,
+                "label": score_record.label,
+                "label_type": label_type_value,
                 "score": Decimal(str(score_record.score)),
                 "score_type": score_type_value,
                 "timestamp": score_record.timestamp.isoformat(),
@@ -92,9 +100,17 @@ class LeaderboardDatabase:
 
             leaderboard = []
             for rank, item in enumerate(response["Items"], 1):
+                # Parse label type with fallback
+                label_type_str = str(item.get("label_type", "custom"))
+                try:
+                    label_type = LabelType(label_type_str)
+                except ValueError:
+                    label_type = LabelType.CUSTOM
+
                 entry = LeaderboardEntry(
                     rank=rank,
-                    initials=str(item["initials"]),
+                    label=str(item["label"]),
+                    label_type=label_type,
                     score=float(str(item["score"])),
                     timestamp=datetime.fromisoformat(str(item["timestamp"])),
                 )
