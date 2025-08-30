@@ -15,13 +15,18 @@ fi
 
 # Step 1: Comment out the backend configuration temporarily
 echo "1. Temporarily disabling remote backend for initial setup..."
-sed -i 's/^  backend "s3"/  #backend "s3"/' versions.tf
-sed -i 's/^    bucket/#    bucket/' versions.tf
-sed -i 's/^    key/#    key/' versions.tf
-sed -i 's/^    region/#    region/' versions.tf
-sed -i 's/^    dynamodb_table/#    dynamodb_table/' versions.tf
-sed -i 's/^    encrypt/#    encrypt/' versions.tf
-sed -i 's/^  }/#  }/' versions.tf
+awk '{
+  if ($0 ~ /^  backend "s3"/) {
+    gsub(/^  backend "s3"/, "  #backend \"s3\"")
+  } else if ($0 ~ /^    (bucket|key|region|dynamodb_table|encrypt)/) {
+    gsub(/^    /, "#    ")
+  } else if (in_backend && $0 ~ /^  }$/) {
+    gsub(/^  }$/, "#  }")
+    in_backend = 0
+  }
+  if ($0 ~ /^  #backend "s3"/) in_backend = 1
+  print
+}' versions.tf > versions.tf.tmp && mv versions.tf.tmp versions.tf
 
 # Step 2: Create backend infrastructure with local state
 echo "2. Creating S3 bucket and DynamoDB table for remote state..."
@@ -30,13 +35,18 @@ terraform apply -target=aws_s3_bucket.terraform_state -target=aws_s3_bucket_vers
 
 # Step 3: Re-enable the backend configuration
 echo "3. Re-enabling remote backend configuration..."
-sed -i 's/^  #backend "s3"/  backend "s3"/' versions.tf
-sed -i 's/^#    bucket/    bucket/' versions.tf
-sed -i 's/^#    key/    key/' versions.tf
-sed -i 's/^#    region/    region/' versions.tf
-sed -i 's/^#    dynamodb_table/    dynamodb_table/' versions.tf
-sed -i 's/^#    encrypt/    encrypt/' versions.tf
-sed -i 's/^#  }/  }/' versions.tf
+awk '{
+  if ($0 ~ /^  #backend "s3"/) {
+    gsub(/^  #backend "s3"/, "  backend \"s3\"")
+  } else if ($0 ~ /^#    (bucket|key|region|dynamodb_table|encrypt)/) {
+    gsub(/^#    /, "    ")
+  } else if (in_backend && $0 ~ /^#  }$/) {
+    gsub(/^#  }$/, "  }")
+    in_backend = 0
+  }
+  if ($0 ~ /^  backend "s3"/) in_backend = 1
+  print
+}' versions.tf > versions.tf.tmp && mv versions.tf.tmp versions.tf
 
 # Step 2: Migrate to remote state
 echo "2. Migrating to remote state backend..."
