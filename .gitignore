@@ -221,3 +221,4 @@ terraform.tfvars
 # Deployment packages
 lambda_function.zip
 *.zip
+terraform/lambda_package/
