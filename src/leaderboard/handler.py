@@ -58,7 +58,7 @@ def get_leaderboard(game_id: str) -> dict[str, Any]:
     try:
         # Get query parameters
         score_type_param = app.current_event.get_query_string_value(
-            "score_type", "high_score"
+            "score_type", "HIGH_SCORE"
         )
         limit_param = app.current_event.get_query_string_value("limit", "10")
 

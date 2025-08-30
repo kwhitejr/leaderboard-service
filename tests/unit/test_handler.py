@@ -49,9 +49,9 @@ class TestHandler:
             "message": "Score submitted successfully",
             "game_id": "snake_classic",
             "label": "KMW",
-            "label_type": "initials",
+            "label_type": "INITIALS",
             "score": "103.0",
-            "score_type": "high_score",
+            "score_type": "HIGH_SCORE",
         }
 
         # Mock event
@@ -61,7 +61,7 @@ class TestHandler:
             "path": "/leaderboard/scores/v1",
             "headers": {"Content-Type": "application/json"},
             "queryStringParameters": None,
-            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "initials", "score": 103.0, "score_type": "high_score"}',
+            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "INITIALS", "score": 103.0, "score_type": "HIGH_SCORE"}',
         }
 
         # Execute
@@ -88,7 +88,7 @@ class TestHandler:
             "path": "/leaderboard/scores/v1",
             "headers": {"Content-Type": "application/json"},
             "queryStringParameters": None,
-            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "initials", "score": -10, "score_type": "high_score"}',
+            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "INITIALS", "score": -10, "score_type": "HIGH_SCORE"}',
         }
 
         # Execute
@@ -134,7 +134,7 @@ class TestHandler:
             "path": "/leaderboard/leaderboards/v1/snake_classic",
             "pathParameters": {"game_id": "snake_classic"},
             "headers": {},
-            "queryStringParameters": {"score_type": "high_score", "limit": "10"},
+            "queryStringParameters": {"score_type": "HIGH_SCORE", "limit": "10"},
             "body": None,
         }
 
@@ -202,7 +202,7 @@ class TestHandler:
             "path": "/leaderboard/scores/v1",
             "headers": {"Content-Type": "application/json"},
             "queryStringParameters": None,
-            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "initials", "score": 103.0, "score_type": "high_score"}',
+            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "INITIALS", "score": 103.0, "score_type": "HIGH_SCORE"}',
         }
 
         # Execute and verify it raises the RuntimeError
@@ -222,7 +222,7 @@ class TestHandler:
             "path": "/leaderboard/scores/v1",
             "headers": {"Content-Type": "application/json"},
             "queryStringParameters": None,
-            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "initials", "score": 103.0, "score_type": "high_score"}',
+            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "INITIALS", "score": 103.0, "score_type": "HIGH_SCORE"}',
         }
 
         # Execute and verify it raises the Exception
@@ -242,7 +242,7 @@ class TestHandler:
             "path": "/leaderboard/leaderboards/v1/snake_classic",
             "pathParameters": {"game_id": "snake_classic"},
             "headers": {},
-            "queryStringParameters": {"score_type": "high_score", "limit": "10"},
+            "queryStringParameters": {"score_type": "HIGH_SCORE", "limit": "10"},
             "body": None,
         }
 
@@ -263,7 +263,7 @@ class TestHandler:
             "path": "/leaderboard/leaderboards/v1/snake_classic",
             "pathParameters": {"game_id": "snake_classic"},
             "headers": {},
-            "queryStringParameters": {"score_type": "high_score", "limit": "10"},
+            "queryStringParameters": {"score_type": "HIGH_SCORE", "limit": "10"},
             "body": None,
         }
 
@@ -345,7 +345,7 @@ class TestHandler:
             "path": "/leaderboard/leaderboards/v1/test_game",
             "pathParameters": {"game_id": "test_game"},
             "headers": {},
-            "queryStringParameters": {"score_type": "high_score", "limit": "10"},
+            "queryStringParameters": {"score_type": "HIGH_SCORE", "limit": "10"},
             "body": None,
         }
 

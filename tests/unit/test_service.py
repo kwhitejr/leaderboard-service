@@ -64,9 +64,9 @@ class TestLeaderboardService:
             "message": "Score submitted successfully",
             "game_id": "snake_classic",
             "label": "KMW",
-            "label_type": "initials",
+            "label_type": "INITIALS",
             "score": "103.0",
-            "score_type": "high_score",
+            "score_type": "HIGH_SCORE",
         }
         assert result == expected_result
 
@@ -158,9 +158,9 @@ class TestLeaderboardService:
     def test_submit_score_different_score_types(self) -> None:
         """Test score submission with different score types."""
         test_cases = [
-            (ScoreType.HIGH_SCORE, "high_score"),
-            (ScoreType.FASTEST_TIME, "fastest_time"),
-            (ScoreType.LONGEST_TIME, "longest_time"),
+            (ScoreType.HIGH_SCORE, "HIGH_SCORE"),
+            (ScoreType.FASTEST_TIME, "FASTEST_TIME"),
+            (ScoreType.LONGEST_TIME, "LONGEST_TIME"),
         ]
 
         for score_type, expected_value in test_cases:
@@ -262,4 +262,4 @@ class TestLeaderboardService:
         assert result["game_id"] == "complex-game_name-123"
         assert result["label"] == "ABC"
         assert result["score"] == "999.999"
-        assert result["score_type"] == "longest_time"
+        assert result["score_type"] == "LONGEST_TIME"

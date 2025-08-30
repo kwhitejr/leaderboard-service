@@ -96,6 +96,91 @@ class TestScoreSubmission:
                 score_type=ScoreType.HIGH_SCORE,
             )
 
+    def test_initials_validation(self) -> None:
+        """Test initials validation for exactly 3 characters."""
+        # Test valid 3-character initials
+        submission = ScoreSubmission(
+            game_id="test",
+            label="ABC",
+            label_type=LabelType.INITIALS,
+            score=100,
+            score_type=ScoreType.HIGH_SCORE,
+        )
+        assert submission.label == "ABC"
+        assert submission.label_type == LabelType.INITIALS
+
+        # Test valid 3-character alphanumeric initials
+        submission = ScoreSubmission(
+            game_id="test",
+            label="A1B",
+            label_type=LabelType.INITIALS,
+            score=100,
+            score_type=ScoreType.HIGH_SCORE,
+        )
+        assert submission.label == "A1B"
+
+        # Test too short initials (2 characters)
+        with pytest.raises(ValidationError, match="Label must be exactly 3 characters when label_type is INITIALS"):
+            ScoreSubmission(
+                game_id="test",
+                label="AB",
+                label_type=LabelType.INITIALS,
+                score=100,
+                score_type=ScoreType.HIGH_SCORE,
+            )
+
+        # Test too long initials (4 characters)
+        with pytest.raises(ValidationError, match="Label must be exactly 3 characters when label_type is INITIALS"):
+            ScoreSubmission(
+                game_id="test",
+                label="ABCD",
+                label_type=LabelType.INITIALS,
+                score=100,
+                score_type=ScoreType.HIGH_SCORE,
+            )
+
+        # Test initials with special characters
+        with pytest.raises(ValidationError, match="Initials must contain only alphanumeric characters"):
+            ScoreSubmission(
+                game_id="test",
+                label="A-B",
+                label_type=LabelType.INITIALS,
+                score=100,
+                score_type=ScoreType.HIGH_SCORE,
+            )
+
+        # Test initials with spaces
+        with pytest.raises(ValidationError, match="Initials must contain only alphanumeric characters"):
+            ScoreSubmission(
+                game_id="test",
+                label="A B",
+                label_type=LabelType.INITIALS,
+                score=100,
+                score_type=ScoreType.HIGH_SCORE,
+            )
+
+    def test_non_initials_not_affected_by_length_validation(self) -> None:
+        """Test that non-INITIALS label types are not affected by 3-character validation."""
+        # Test USERNAME with 2 characters (should be fine)
+        submission = ScoreSubmission(
+            game_id="test",
+            label="AB",
+            label_type=LabelType.USERNAME,
+            score=100,
+            score_type=ScoreType.HIGH_SCORE,
+        )
+        assert submission.label == "AB"
+
+        # Test CUSTOM with 4+ characters (should be fine)
+        submission = ScoreSubmission(
+            game_id="test",
+            label="LongCustomLabel",
+            label_type=LabelType.CUSTOM,
+            score=100,
+            score_type=ScoreType.HIGH_SCORE,
+        )
+        assert submission.label == "LongCustomLabel"
+
     def test_game_id_validation(self) -> None:
         """Test game_id validation."""
         # Test valid game IDs

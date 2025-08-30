@@ -3,24 +3,24 @@
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pydantic import BaseModel, Field, field_validator, model_validator, ConfigDict
 
 
 class ScoreType(str, Enum):
     """Supported score types for leaderboards."""
 
-    HIGH_SCORE = "high_score"
-    FASTEST_TIME = "fastest_time"
-    LONGEST_TIME = "longest_time"
+    HIGH_SCORE = "HIGH_SCORE"
+    FASTEST_TIME = "FASTEST_TIME"
+    LONGEST_TIME = "LONGEST_TIME"
 
 
 class LabelType(str, Enum):
     """Supported label types for player identification."""
 
-    INITIALS = "initials"
-    USERNAME = "username"
-    TEAM_NAME = "team_name"
-    CUSTOM = "custom"
+    INITIALS = "INITIALS"
+    USERNAME = "USERNAME"
+    TEAM_NAME = "TEAM_NAME"
+    CUSTOM = "CUSTOM"
 
 
 class ScoreSubmission(BaseModel):
@@ -49,6 +49,16 @@ class ScoreSubmission(BaseModel):
         if not v:
             raise ValueError("Label cannot be empty")
         return v
+    
+    @model_validator(mode='after')
+    def validate_initials(self):
+        """Validate that initials are exactly 3 characters."""
+        if self.label_type == LabelType.INITIALS:
+            if len(self.label) != 3:
+                raise ValueError("Label must be exactly 3 characters when label_type is INITIALS")
+            if not self.label.isalnum():
+                raise ValueError("Initials must contain only alphanumeric characters")
+        return self
 
     @field_validator("game_id")
     @classmethod
