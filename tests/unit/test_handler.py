@@ -41,9 +41,18 @@ class TestHandler:
         assert "healthy" in body
         assert "leaderboard" in body
 
-    @patch("src.leaderboard.handler.db")
-    def test_submit_score_valid(self, mock_db: MagicMock) -> None:
+    @patch("src.leaderboard.handler.service")
+    def test_submit_score_valid(self, mock_service: MagicMock) -> None:
         """Test valid score submission."""
+        # Setup mock return value
+        mock_service.submit_score.return_value = {
+            "message": "Score submitted successfully",
+            "game_id": "snake_classic",
+            "initials": "KMW",
+            "score": "103.0",
+            "score_type": "high_score",
+        }
+
         # Mock event
         event = {
             "resource": "/leaderboard/scores/v1",
@@ -59,17 +68,17 @@ class TestHandler:
 
         # Verify
         assert response["statusCode"] == 200
-        mock_db.submit_score.assert_called_once()
+        mock_service.submit_score.assert_called_once()
 
-        # Verify the score record passed to db
-        call_args = mock_db.submit_score.call_args[0][0]
+        # Verify the submission passed to service
+        call_args = mock_service.submit_score.call_args[0][0]
         assert call_args.game_id == "snake_classic"
         assert call_args.initials == "KMW"
         assert call_args.score == 103.0
         assert call_args.score_type == ScoreType.HIGH_SCORE
 
-    @patch("src.leaderboard.handler.db")
-    def test_submit_score_invalid_data(self, mock_db: MagicMock) -> None:
+    @patch("src.leaderboard.handler.service")
+    def test_submit_score_invalid_data(self, mock_service: MagicMock) -> None:
         """Test score submission with invalid data."""
         # Mock event with invalid score
         event = {
@@ -86,12 +95,14 @@ class TestHandler:
 
         # Verify
         assert response["statusCode"] == 400
-        mock_db.submit_score.assert_not_called()
+        mock_service.submit_score.assert_not_called()
 
-    @patch("src.leaderboard.handler.db")
-    def test_get_leaderboard_valid(self, mock_db: MagicMock) -> None:
+    @patch("src.leaderboard.handler.service")
+    def test_get_leaderboard_valid(self, mock_service: MagicMock) -> None:
         """Test valid leaderboard request."""
         # Setup mock return value
+        from src.leaderboard.models import LeaderboardResponse
+
         mock_entries = [
             LeaderboardEntry(
                 rank=1,
@@ -106,7 +117,12 @@ class TestHandler:
                 timestamp=datetime(2024, 1, 14, 15, 20, 0),
             ),
         ]
-        mock_db.get_leaderboard.return_value = mock_entries
+        mock_response = LeaderboardResponse(
+            game_id="snake_classic",
+            score_type=ScoreType.HIGH_SCORE,
+            leaderboard=mock_entries,
+        )
+        mock_service.get_leaderboard.return_value = mock_response
 
         # Mock event
         event = {
@@ -124,12 +140,12 @@ class TestHandler:
 
         # Verify
         assert response["statusCode"] == 200
-        mock_db.get_leaderboard.assert_called_once_with(
+        mock_service.get_leaderboard.assert_called_once_with(
             "snake_classic", ScoreType.HIGH_SCORE, 10
         )
 
-    @patch("src.leaderboard.handler.db")
-    def test_get_leaderboard_invalid_score_type(self, mock_db: MagicMock) -> None:
+    @patch("src.leaderboard.handler.service")
+    def test_get_leaderboard_invalid_score_type(self, mock_service: MagicMock) -> None:
         """Test leaderboard request with invalid score type."""
         # Mock event
         event = {
@@ -147,10 +163,10 @@ class TestHandler:
 
         # Verify
         assert response["statusCode"] == 400
-        mock_db.get_leaderboard.assert_not_called()
+        mock_service.get_leaderboard.assert_not_called()
 
-    @patch("src.leaderboard.handler.db")
-    def test_get_leaderboard_invalid_limit(self, mock_db: MagicMock) -> None:
+    @patch("src.leaderboard.handler.service")
+    def test_get_leaderboard_invalid_limit(self, mock_service: MagicMock) -> None:
         """Test leaderboard request with invalid limit."""
         # Mock event
         event = {
@@ -168,13 +184,13 @@ class TestHandler:
 
         # Verify
         assert response["statusCode"] == 400
-        mock_db.get_leaderboard.assert_not_called()
+        mock_service.get_leaderboard.assert_not_called()
 
-    @patch("src.leaderboard.handler.db")
-    def test_submit_score_database_error(self, mock_db: MagicMock) -> None:
+    @patch("src.leaderboard.handler.service")
+    def test_submit_score_database_error(self, mock_service: MagicMock) -> None:
         """Test score submission with database error."""
         # Setup mock to raise RuntimeError
-        mock_db.submit_score.side_effect = RuntimeError("Database error")
+        mock_service.submit_score.side_effect = RuntimeError("Database error")
 
         # Mock event
         event = {
@@ -190,11 +206,11 @@ class TestHandler:
         with pytest.raises(RuntimeError, match="Database error"):
             self.app.resolve(event, {})
 
-    @patch("src.leaderboard.handler.db")
-    def test_submit_score_unexpected_error(self, mock_db: MagicMock) -> None:
+    @patch("src.leaderboard.handler.service")
+    def test_submit_score_unexpected_error(self, mock_service: MagicMock) -> None:
         """Test score submission with unexpected error."""
         # Setup mock to raise generic Exception
-        mock_db.submit_score.side_effect = Exception("Unexpected error")
+        mock_service.submit_score.side_effect = Exception("Unexpected error")
 
         # Mock event
         event = {
@@ -210,11 +226,11 @@ class TestHandler:
         with pytest.raises(Exception, match="Unexpected error"):
             self.app.resolve(event, {})
 
-    @patch("src.leaderboard.handler.db")
-    def test_get_leaderboard_database_error(self, mock_db: MagicMock) -> None:
+    @patch("src.leaderboard.handler.service")
+    def test_get_leaderboard_database_error(self, mock_service: MagicMock) -> None:
         """Test leaderboard request with database error."""
         # Setup mock to raise RuntimeError
-        mock_db.get_leaderboard.side_effect = RuntimeError("Database error")
+        mock_service.get_leaderboard.side_effect = RuntimeError("Database error")
 
         # Mock event
         event = {
@@ -231,11 +247,11 @@ class TestHandler:
         with pytest.raises(RuntimeError, match="Database error"):
             self.app.resolve(event, {})
 
-    @patch("src.leaderboard.handler.db")
-    def test_get_leaderboard_unexpected_error(self, mock_db: MagicMock) -> None:
+    @patch("src.leaderboard.handler.service")
+    def test_get_leaderboard_unexpected_error(self, mock_service: MagicMock) -> None:
         """Test leaderboard request with unexpected error."""
         # Setup mock to raise generic Exception
-        mock_db.get_leaderboard.side_effect = Exception("Unexpected error")
+        mock_service.get_leaderboard.side_effect = Exception("Unexpected error")
 
         # Mock event
         event = {
@@ -252,9 +268,9 @@ class TestHandler:
         with pytest.raises(Exception, match="Unexpected error"):
             self.app.resolve(event, {})
 
-    @patch("src.leaderboard.handler.db")
+    @patch("src.leaderboard.handler.service")
     def test_get_leaderboard_parameter_validation_error(
-        self, mock_db: MagicMock
+        self, mock_service: MagicMock
     ) -> None:
         """Test leaderboard request with parameter validation error."""
         # Mock event with invalid limit format
@@ -273,7 +289,7 @@ class TestHandler:
 
         # Verify
         assert response["statusCode"] == 400
-        mock_db.get_leaderboard.assert_not_called()
+        mock_service.get_leaderboard.assert_not_called()
 
     def test_lambda_handler_integration(self) -> None:
         """Test the lambda_handler entry point."""
@@ -313,20 +329,11 @@ class TestHandler:
         assert "healthy" in body
         assert "leaderboard" in body
 
-    @patch("src.leaderboard.handler.db")
-    def test_get_leaderboard_generic_value_error(self, mock_db: MagicMock) -> None:
+    @patch("src.leaderboard.handler.service")
+    def test_get_leaderboard_generic_value_error(self, mock_service: MagicMock) -> None:
         """Test leaderboard request with generic ValueError (not parameter validation)."""
-        # Mock the database to return data that causes a ValueError during response creation
-        from src.leaderboard.models import LeaderboardEntry
-
-        # Create a mock entry with valid data
-        mock_entry = LeaderboardEntry(
-            rank=1,
-            initials="TST",
-            score=100.0,
-            timestamp=datetime(2024, 1, 15, 10, 30, 0),
-        )
-        mock_db.get_leaderboard.return_value = [mock_entry]
+        # Mock the service to raise a ValueError
+        mock_service.get_leaderboard.side_effect = ValueError("Invalid response data")
 
         # Mock event
         event = {
@@ -339,13 +346,9 @@ class TestHandler:
             "body": None,
         }
 
-        # Mock LeaderboardResponse to raise ValueError during construction
-        with patch("src.leaderboard.handler.LeaderboardResponse") as mock_response:
-            mock_response.side_effect = ValueError("Invalid response data")
+        # Execute
+        response = self.app.resolve(event, {})
 
-            # Execute
-            response = self.app.resolve(event, {})
-
-            # Verify - should catch ValueError and return 400
-            assert response["statusCode"] == 400
-            mock_db.get_leaderboard.assert_called_once()
+        # Verify - should catch ValueError and return 400
+        assert response["statusCode"] == 400
+        mock_service.get_leaderboard.assert_called_once()

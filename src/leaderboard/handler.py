@@ -1,6 +1,5 @@
 """Lambda handler for leaderboard service."""
 
-from datetime import datetime, UTC
 from typing import Any
 
 from aws_lambda_powertools import Logger
@@ -10,18 +9,18 @@ from aws_lambda_powertools.logging import correlation_paths
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from pydantic import ValidationError
 
-from .database import LeaderboardDatabase
-from .models import LeaderboardResponse, ScoreRecord, ScoreSubmission, ScoreType
+from .models import ScoreSubmission, ScoreType
+from .service import LeaderboardService
 
 logger = Logger()
 app = APIGatewayRestResolver()
-db = LeaderboardDatabase()
+service = LeaderboardService()
 
 
 @app.get("/leaderboard/health")
 def health_check() -> dict[str, str]:
     """Health check endpoint."""
-    return {"status": "healthy", "service": "leaderboard"}
+    return service.health_check()
 
 
 @app.post("/leaderboard/scores/v1")
@@ -34,28 +33,13 @@ def submit_score() -> dict[str, str]:
             "Score submission received", extra={"submission": submission.model_dump()}
         )
 
-        # Create score record with timestamp
-        score_record = ScoreRecord(
-            game_id=submission.game_id,
-            initials=submission.initials,
-            score=submission.score,
-            score_type=submission.score_type,
-            timestamp=datetime.now(UTC),
-        )
-
-        # Submit to database
-        db.submit_score(score_record)
+        # Delegate to service layer
+        result = service.submit_score(submission)
         logger.info(
             "Score submitted successfully", extra={"game_id": submission.game_id}
         )
 
-        return {
-            "message": "Score submitted successfully",
-            "game_id": submission.game_id,
-            "initials": submission.initials,
-            "score": str(submission.score),
-            "score_type": submission.score_type.value,
-        }
+        return result
 
     except ValidationError as e:
         logger.warning("Invalid score submission", extra={"errors": e.errors()})
@@ -100,17 +84,12 @@ def get_leaderboard(game_id: str) -> dict[str, Any]:
             extra={"game_id": game_id, "score_type": score_type.value, "limit": limit},
         )
 
-        # Get leaderboard from database
-        leaderboard_entries = db.get_leaderboard(game_id, score_type, limit)
-
-        # Create response
-        response = LeaderboardResponse(
-            game_id=game_id, score_type=score_type, leaderboard=leaderboard_entries
-        )
+        # Delegate to service layer
+        response = service.get_leaderboard(game_id, score_type, limit)
 
         logger.info(
             "Leaderboard retrieved successfully",
-            extra={"game_id": game_id, "entries_count": len(leaderboard_entries)},
+            extra={"game_id": game_id, "entries_count": len(response.leaderboard)},
         )
 
         return response.model_dump(mode="json")

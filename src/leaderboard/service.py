@@ -1,0 +1,75 @@
+"""Business logic service for leaderboard operations."""
+
+from datetime import datetime, UTC
+from typing import Any
+
+from .database import LeaderboardDatabase
+from .models import LeaderboardResponse, ScoreRecord, ScoreSubmission, ScoreType
+
+
+class LeaderboardService:
+    """Service layer containing pure business logic for leaderboard operations."""
+
+    def __init__(self, database: LeaderboardDatabase | None = None) -> None:
+        """Initialize service with database dependency."""
+        self.db = database or LeaderboardDatabase()
+
+    def health_check(self) -> dict[str, str]:
+        """Perform health check."""
+        return {"status": "healthy", "service": "leaderboard"}
+
+    def submit_score(self, submission: ScoreSubmission) -> dict[str, Any]:
+        """Submit a score to the leaderboard.
+
+        Args:
+            submission: Validated score submission data
+
+        Returns:
+            Dictionary with submission confirmation details
+
+        Raises:
+            RuntimeError: If database operation fails
+        """
+        # Create score record with timestamp
+        score_record = ScoreRecord(
+            game_id=submission.game_id,
+            initials=submission.initials,
+            score=submission.score,
+            score_type=submission.score_type,
+            timestamp=datetime.now(UTC),
+        )
+
+        # Submit to database
+        self.db.submit_score(score_record)
+
+        return {
+            "message": "Score submitted successfully",
+            "game_id": submission.game_id,
+            "initials": submission.initials,
+            "score": str(submission.score),
+            "score_type": submission.score_type.value,
+        }
+
+    def get_leaderboard(
+        self, game_id: str, score_type: ScoreType, limit: int
+    ) -> LeaderboardResponse:
+        """Get leaderboard for a specific game.
+
+        Args:
+            game_id: Game identifier
+            score_type: Type of scores to retrieve
+            limit: Maximum number of entries to return
+
+        Returns:
+            LeaderboardResponse with game data and entries
+
+        Raises:
+            RuntimeError: If database operation fails
+        """
+        # Get leaderboard from database
+        leaderboard_entries = self.db.get_leaderboard(game_id, score_type, limit)
+
+        # Create response
+        return LeaderboardResponse(
+            game_id=game_id, score_type=score_type, leaderboard=leaderboard_entries
+        )
