@@ -86,11 +86,50 @@ resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
   policy_arn = aws_iam_policy.lambda_policy.arn
 }
 
-# Package Lambda function
+# Create deployment package directory
+resource "null_resource" "lambda_package" {
+  triggers = {
+    requirements = filemd5("../requirements.txt")
+    source_code  = filemd5("../src/leaderboard/handler.py")
+    models       = filemd5("../src/leaderboard/models.py")
+    database     = filemd5("../src/leaderboard/database.py")
+    # Force recreation to fix architecture compatibility
+    platform_fix = "docker_build_v1"
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      rm -rf lambda_package
+      mkdir -p lambda_package
+      cp -r ../src/* lambda_package/
+      if command -v docker > /dev/null; then
+        # Use Docker to ensure proper Linux x86_64 packages
+        docker run --rm -v "$PWD/../requirements.txt:/requirements.txt" -v "$PWD/lambda_package:/lambda_package" python:3.11-slim bash -c "
+          pip install -r /requirements.txt -t /lambda_package/
+        "
+      else
+        # Fallback to local pip install
+        pip install -r ../requirements.txt -t lambda_package/
+      fi
+      find lambda_package -name "*.pyc" -delete
+      find lambda_package -name "__pycache__" -type d -exec rm -rf {} +
+    EOT
+  }
+
+  # Clean up after deployment
+  provisioner "local-exec" {
+    when    = destroy
+    command = "rm -rf lambda_package lambda_function.zip"
+  }
+}
+
+# Package Lambda function with dependencies
 data "archive_file" "lambda_zip" {
   type        = "zip"
-  source_dir  = "../src"
+  source_dir  = "lambda_package"
   output_path = "lambda_function.zip"
+
+  depends_on = [null_resource.lambda_package]
 }
 
 # Lambda function
