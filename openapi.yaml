@@ -1,0 +1,287 @@
+openapi: 3.0.3
+info:
+  title: Leaderboard Service API
+  description: API for managing game leaderboards with score submissions and retrieval
+  version: 1.0.0
+  contact:
+    name: Leaderboard Service
+servers:
+  - url: https://api.kwhitejr.com
+    description: Production server
+paths:
+  /leaderboard/health:
+    get:
+      summary: Health check endpoint
+      description: Returns the health status of the service
+      operationId: health_check
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  service:
+                    type: string
+                    example: "leaderboard"
+                required:
+                  - status
+                  - service
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /leaderboard/scores/v1:
+    post:
+      summary: Submit a score
+      description: Submit a score to the leaderboard for a specific game
+      operationId: submit_score
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScoreSubmission'
+      responses:
+        '200':
+          description: Score submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Score submitted successfully"
+                  game_id:
+                    type: string
+                    example: "pac-man"
+                  initials:
+                    type: string
+                    example: "ABC"
+                  score:
+                    type: string
+                    example: "12500"
+                  score_type:
+                    $ref: '#/components/schemas/ScoreType'
+                required:
+                  - message
+                  - game_id
+                  - initials
+                  - score
+                  - score_type
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /leaderboard/leaderboards/v1/{game_id}:
+    get:
+      summary: Get leaderboard
+      description: Retrieve the leaderboard for a specific game
+      operationId: get_leaderboard
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 50
+          description: Game identifier
+          example: "pac-man"
+        - name: score_type
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ScoreType'
+          description: Type of score to filter by
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Maximum number of entries to return
+      responses:
+        '200':
+          description: Leaderboard retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    ScoreType:
+      type: string
+      enum:
+        - high_score
+        - fastest_time
+        - longest_time
+      description: |
+        Type of score:
+        - high_score: Higher values are better
+        - fastest_time: Lower values are better (e.g., race times)
+        - longest_time: Higher values are better (e.g., survival time)
+
+    ScoreSubmission:
+      type: object
+      required:
+        - game_id
+        - initials
+        - score
+        - score_type
+      properties:
+        game_id:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: '^[a-zA-Z0-9_-]+$'
+          description: Game identifier (alphanumeric, hyphens, underscores only)
+          example: "pac-man"
+        initials:
+          type: string
+          minLength: 1
+          maxLength: 3
+          pattern: '^[A-Z0-9]+$'
+          description: Player initials (alphanumeric, uppercase)
+          example: "ABC"
+        score:
+          type: number
+          format: float
+          minimum: 0
+          description: Score value (must be non-negative)
+          example: 12500
+        score_type:
+          $ref: '#/components/schemas/ScoreType'
+
+    LeaderboardEntry:
+      type: object
+      required:
+        - rank
+        - initials
+        - score
+        - timestamp
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+          description: Rank position on the leaderboard
+          example: 1
+        initials:
+          type: string
+          description: Player initials
+          example: "ABC"
+        score:
+          type: number
+          format: float
+          description: Score value
+          example: 12500
+        timestamp:
+          type: string
+          format: date-time
+          description: When the score was submitted
+          example: "2024-01-15T10:30:00Z"
+
+    LeaderboardResponse:
+      type: object
+      required:
+        - game_id
+        - score_type
+        - leaderboard
+      properties:
+        game_id:
+          type: string
+          description: Game identifier
+          example: "pac-man"
+        score_type:
+          $ref: '#/components/schemas/ScoreType'
+        leaderboard:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+          description: Array of leaderboard entries ordered by rank
+
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Error message
+        details:
+          type: object
+          description: Additional error details (optional)
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            invalid_score_type:
+              summary: Invalid score type
+              value:
+                message: "Invalid score_type: invalid_type. Must be one of: ['high_score', 'fastest_time', 'longest_time']"
+            invalid_limit:
+              summary: Invalid limit parameter
+              value:
+                message: "Invalid limit: must be an integer between 1 and 100"
+            invalid_request_body:
+              summary: Invalid request body
+              value:
+                message: "Invalid request: [{'type': 'missing', 'loc': ['game_id'], 'msg': 'Field required'}]"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "An internal server error occurred"
+
+  examples:
+    HighScoreSubmission:
+      summary: Submit a high score
+      value:
+        game_id: "pac-man"
+        initials: "ABC"
+        score: 12500
+        score_type: "high_score"
+
+    FastestTimeSubmission:
+      summary: Submit a fastest time
+      value:
+        game_id: "race-game"
+        initials: "XYZ"
+        score: 125.5
+        score_type: "fastest_time"
+
+    LeaderboardExample:
+      summary: Sample leaderboard response
+      value:
+        game_id: "pac-man"
+        score_type: "high_score"
+        leaderboard:
+          - rank: 1
+            initials: "ABC"
+            score: 12500
+            timestamp: "2024-01-15T10:30:00Z"
+          - rank: 2
+            initials: "XYZ"
+            score: 11000
+            timestamp: "2024-01-15T09:15:00Z"

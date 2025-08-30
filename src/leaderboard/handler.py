@@ -18,13 +18,13 @@ app = APIGatewayRestResolver()
 db = LeaderboardDatabase()
 
 
-@app.get("/health")
+@app.get("/leaderboard/health")
 def health_check() -> dict[str, str]:
     """Health check endpoint."""
     return {"status": "healthy", "service": "leaderboard"}
 
 
-@app.post("/games/scores/v1")
+@app.post("/leaderboard/scores/v1")
 def submit_score() -> dict[str, str]:
     """Submit a score to the leaderboard."""
     try:
@@ -68,7 +68,7 @@ def submit_score() -> dict[str, str]:
         raise
 
 
-@app.get("/games/leaderboards/v1/<game_id>")
+@app.get("/leaderboard/leaderboards/v1/<game_id>")
 def get_leaderboard(game_id: str) -> dict[str, Any]:
     """Get leaderboard for a specific game."""
     try:

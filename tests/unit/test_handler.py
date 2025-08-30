@@ -24,9 +24,9 @@ class TestHandler:
         """Test health check endpoint."""
         # Mock event
         event = {
-            "resource": "/health",
+            "resource": "/leaderboard/health",
             "httpMethod": "GET",
-            "path": "/health",
+            "path": "/leaderboard/health",
             "headers": {},
             "queryStringParameters": None,
             "body": None,
@@ -46,9 +46,9 @@ class TestHandler:
         """Test valid score submission."""
         # Mock event
         event = {
-            "resource": "/games/scores/v1",
+            "resource": "/leaderboard/scores/v1",
             "httpMethod": "POST",
-            "path": "/games/scores/v1",
+            "path": "/leaderboard/scores/v1",
             "headers": {"Content-Type": "application/json"},
             "queryStringParameters": None,
             "body": '{"game_id": "snake_classic", "initials": "KMW", "score": 103.0, "score_type": "high_score"}',
@@ -73,9 +73,9 @@ class TestHandler:
         """Test score submission with invalid data."""
         # Mock event with invalid score
         event = {
-            "resource": "/games/scores/v1",
+            "resource": "/leaderboard/scores/v1",
             "httpMethod": "POST",
-            "path": "/games/scores/v1",
+            "path": "/leaderboard/scores/v1",
             "headers": {"Content-Type": "application/json"},
             "queryStringParameters": None,
             "body": '{"game_id": "snake_classic", "initials": "KMW", "score": -10, "score_type": "high_score"}',
@@ -110,9 +110,9 @@ class TestHandler:
 
         # Mock event
         event = {
-            "resource": "/games/leaderboards/v1/{game_id}",
+            "resource": "/leaderboard/leaderboards/v1/{game_id}",
             "httpMethod": "GET",
-            "path": "/games/leaderboards/v1/snake_classic",
+            "path": "/leaderboard/leaderboards/v1/snake_classic",
             "pathParameters": {"game_id": "snake_classic"},
             "headers": {},
             "queryStringParameters": {"score_type": "high_score", "limit": "10"},
@@ -133,9 +133,9 @@ class TestHandler:
         """Test leaderboard request with invalid score type."""
         # Mock event
         event = {
-            "resource": "/games/leaderboards/v1/{game_id}",
+            "resource": "/leaderboard/leaderboards/v1/{game_id}",
             "httpMethod": "GET",
-            "path": "/games/leaderboards/v1/snake_classic",
+            "path": "/leaderboard/leaderboards/v1/snake_classic",
             "pathParameters": {"game_id": "snake_classic"},
             "headers": {},
             "queryStringParameters": {"score_type": "invalid_type"},
@@ -154,9 +154,9 @@ class TestHandler:
         """Test leaderboard request with invalid limit."""
         # Mock event
         event = {
-            "resource": "/games/leaderboards/v1/{game_id}",
+            "resource": "/leaderboard/leaderboards/v1/{game_id}",
             "httpMethod": "GET",
-            "path": "/games/leaderboards/v1/snake_classic",
+            "path": "/leaderboard/leaderboards/v1/snake_classic",
             "pathParameters": {"game_id": "snake_classic"},
             "headers": {},
             "queryStringParameters": {"limit": "150"},
@@ -178,9 +178,9 @@ class TestHandler:
 
         # Mock event
         event = {
-            "resource": "/games/scores/v1",
+            "resource": "/leaderboard/scores/v1",
             "httpMethod": "POST",
-            "path": "/games/scores/v1",
+            "path": "/leaderboard/scores/v1",
             "headers": {"Content-Type": "application/json"},
             "queryStringParameters": None,
             "body": '{"game_id": "snake_classic", "initials": "KMW", "score": 103.0, "score_type": "high_score"}',
@@ -198,9 +198,9 @@ class TestHandler:
 
         # Mock event
         event = {
-            "resource": "/games/scores/v1",
+            "resource": "/leaderboard/scores/v1",
             "httpMethod": "POST",
-            "path": "/games/scores/v1",
+            "path": "/leaderboard/scores/v1",
             "headers": {"Content-Type": "application/json"},
             "queryStringParameters": None,
             "body": '{"game_id": "snake_classic", "initials": "KMW", "score": 103.0, "score_type": "high_score"}',
@@ -218,9 +218,9 @@ class TestHandler:
 
         # Mock event
         event = {
-            "resource": "/games/leaderboards/v1/{game_id}",
+            "resource": "/leaderboard/leaderboards/v1/{game_id}",
             "httpMethod": "GET",
-            "path": "/games/leaderboards/v1/snake_classic",
+            "path": "/leaderboard/leaderboards/v1/snake_classic",
             "pathParameters": {"game_id": "snake_classic"},
             "headers": {},
             "queryStringParameters": {"score_type": "high_score", "limit": "10"},
@@ -239,9 +239,9 @@ class TestHandler:
 
         # Mock event
         event = {
-            "resource": "/games/leaderboards/v1/{game_id}",
+            "resource": "/leaderboard/leaderboards/v1/{game_id}",
             "httpMethod": "GET",
-            "path": "/games/leaderboards/v1/snake_classic",
+            "path": "/leaderboard/leaderboards/v1/snake_classic",
             "pathParameters": {"game_id": "snake_classic"},
             "headers": {},
             "queryStringParameters": {"score_type": "high_score", "limit": "10"},
@@ -259,9 +259,9 @@ class TestHandler:
         """Test leaderboard request with parameter validation error."""
         # Mock event with invalid limit format
         event = {
-            "resource": "/games/leaderboards/v1/{game_id}",
+            "resource": "/leaderboard/leaderboards/v1/{game_id}",
             "httpMethod": "GET",
-            "path": "/games/leaderboards/v1/snake_classic",
+            "path": "/leaderboard/leaderboards/v1/snake_classic",
             "pathParameters": {"game_id": "snake_classic"},
             "headers": {},
             "queryStringParameters": {"limit": "not_a_number"},
@@ -282,9 +282,9 @@ class TestHandler:
 
         # Mock event for health check
         event = {
-            "resource": "/health",
+            "resource": "/leaderboard/health",
             "httpMethod": "GET",
-            "path": "/health",
+            "path": "/leaderboard/health",
             "headers": {},
             "queryStringParameters": None,
             "body": None,
@@ -330,9 +330,9 @@ class TestHandler:
 
         # Mock event
         event = {
-            "resource": "/games/leaderboards/v1/{game_id}",
+            "resource": "/leaderboard/leaderboards/v1/{game_id}",
             "httpMethod": "GET",
-            "path": "/games/leaderboards/v1/test_game",
+            "path": "/leaderboard/leaderboards/v1/test_game",
             "pathParameters": {"game_id": "test_game"},
             "headers": {},
             "queryStringParameters": {"score_type": "high_score", "limit": "10"},
