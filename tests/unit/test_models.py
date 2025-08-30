@@ -120,7 +120,10 @@ class TestScoreSubmission:
         assert submission.label == "A1B"
 
         # Test too short initials (2 characters)
-        with pytest.raises(ValidationError, match="Label must be exactly 3 characters when label_type is INITIALS"):
+        with pytest.raises(
+            ValidationError,
+            match="Label must be exactly 3 characters when label_type is INITIALS",
+        ):
             ScoreSubmission(
                 game_id="test",
                 label="AB",
@@ -130,7 +133,10 @@ class TestScoreSubmission:
             )
 
         # Test too long initials (4 characters)
-        with pytest.raises(ValidationError, match="Label must be exactly 3 characters when label_type is INITIALS"):
+        with pytest.raises(
+            ValidationError,
+            match="Label must be exactly 3 characters when label_type is INITIALS",
+        ):
             ScoreSubmission(
                 game_id="test",
                 label="ABCD",
@@ -140,7 +146,9 @@ class TestScoreSubmission:
             )
 
         # Test initials with special characters
-        with pytest.raises(ValidationError, match="Initials must contain only alphanumeric characters"):
+        with pytest.raises(
+            ValidationError, match="Initials must contain only alphanumeric characters"
+        ):
             ScoreSubmission(
                 game_id="test",
                 label="A-B",
@@ -150,7 +158,9 @@ class TestScoreSubmission:
             )
 
         # Test initials with spaces
-        with pytest.raises(ValidationError, match="Initials must contain only alphanumeric characters"):
+        with pytest.raises(
+            ValidationError, match="Initials must contain only alphanumeric characters"
+        ):
             ScoreSubmission(
                 game_id="test",
                 label="A B",

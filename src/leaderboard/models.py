@@ -49,13 +49,15 @@ class ScoreSubmission(BaseModel):
         if not v:
             raise ValueError("Label cannot be empty")
         return v
-    
-    @model_validator(mode='after')
-    def validate_initials(self):
+
+    @model_validator(mode="after")
+    def validate_initials(self) -> "ScoreSubmission":
         """Validate that initials are exactly 3 characters."""
         if self.label_type == LabelType.INITIALS:
             if len(self.label) != 3:
-                raise ValueError("Label must be exactly 3 characters when label_type is INITIALS")
+                raise ValueError(
+                    "Label must be exactly 3 characters when label_type is INITIALS"
+                )
             if not self.label.isalnum():
                 raise ValueError("Initials must contain only alphanumeric characters")
         return self
