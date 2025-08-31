@@ -84,6 +84,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install bandit
+        pip install "marshmallow<4.0"
         pip install --upgrade --force-reinstall safety==3.2.8 typer==0.12.5
     
     - name: Run security checks
