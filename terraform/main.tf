@@ -107,19 +107,25 @@ resource "null_resource" "lambda_package" {
         docker run --rm -v "$PWD/../requirements.txt:/requirements.txt" -v "$PWD/lambda_package:/lambda_package" python:3.11-slim bash -c "
           pip install -r /requirements.txt -t /lambda_package/
         "
+        # Fix ownership and permissions after Docker build
+        sudo chown -R $(id -u):$(id -g) lambda_package/ || true
+        chmod -R u+w lambda_package/ || true
       else
         # Fallback to local pip install
         pip install -r ../requirements.txt -t lambda_package/
       fi
-      find lambda_package -name "*.pyc" -delete
-      find lambda_package -name "__pycache__" -type d -exec rm -rf {} +
+      find lambda_package -name "*.pyc" -delete 2>/dev/null || true
+      find lambda_package -name "__pycache__" -type d -exec chmod -R u+w {} \; -exec rm -rf {} + 2>/dev/null || true
     EOT
   }
 
   # Clean up after deployment
   provisioner "local-exec" {
     when    = destroy
-    command = "rm -rf lambda_package lambda_function.zip"
+    command = <<-EOT
+      chmod -R u+w lambda_package/ 2>/dev/null || true
+      rm -rf lambda_package lambda_function.zip
+    EOT
   }
 }
 
