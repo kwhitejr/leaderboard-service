@@ -45,7 +45,7 @@ class TestLeaderboardDatabase:
             label_type=LabelType.INITIALS,
             score=103.0,
             score_type=ScoreType.POINTS,
-            timestamp=timestamp,
+            created_at_timestamp=timestamp,
         )
 
         # Execute
@@ -74,7 +74,7 @@ class TestLeaderboardDatabase:
             label_type=LabelType.INITIALS,
             score=34.7,
             score_type=ScoreType.TIME_IN_MILLISECONDS,
-            timestamp=timestamp,
+            created_at_timestamp=timestamp,
         )
 
         # Execute
@@ -106,7 +106,7 @@ class TestLeaderboardDatabase:
                 label_type=LabelType.INITIALS,
                 score=103.0,
                 score_type=ScoreType.POINTS,
-                timestamp=datetime(2024, 1, 15, 10, 30, 0),
+                created_at_timestamp=datetime(2024, 1, 15, 10, 30, 0),
             ),
             ScoreRecord(
                 game_id="snake_classic",
@@ -114,7 +114,7 @@ class TestLeaderboardDatabase:
                 label_type=LabelType.INITIALS,
                 score=95.0,
                 score_type=ScoreType.POINTS,
-                timestamp=datetime(2024, 1, 14, 15, 20, 0),
+                created_at_timestamp=datetime(2024, 1, 14, 15, 20, 0),
             ),
             ScoreRecord(
                 game_id="snake_classic",
@@ -122,7 +122,7 @@ class TestLeaderboardDatabase:
                 label_type=LabelType.INITIALS,
                 score=87.0,
                 score_type=ScoreType.POINTS,
-                timestamp=datetime(2024, 1, 13, 12, 10, 0),
+                created_at_timestamp=datetime(2024, 1, 13, 12, 10, 0),
             ),
         ]
 
@@ -157,7 +157,7 @@ class TestLeaderboardDatabase:
                 label_type=LabelType.INITIALS,
                 score=34.7,
                 score_type=ScoreType.TIME_IN_MILLISECONDS,
-                timestamp=datetime(2024, 1, 15, 10, 30, 0),
+                created_at_timestamp=datetime(2024, 1, 15, 10, 30, 0),
             ),
             ScoreRecord(
                 game_id="race_game",
@@ -165,7 +165,7 @@ class TestLeaderboardDatabase:
                 label_type=LabelType.INITIALS,
                 score=45.2,
                 score_type=ScoreType.TIME_IN_MILLISECONDS,
-                timestamp=datetime(2024, 1, 14, 15, 20, 0),
+                created_at_timestamp=datetime(2024, 1, 14, 15, 20, 0),
             ),
             ScoreRecord(
                 game_id="race_game",
@@ -173,7 +173,7 @@ class TestLeaderboardDatabase:
                 label_type=LabelType.INITIALS,
                 score=32.1,
                 score_type=ScoreType.TIME_IN_MILLISECONDS,
-                timestamp=datetime(2024, 1, 13, 12, 10, 0),
+                created_at_timestamp=datetime(2024, 1, 13, 12, 10, 0),
             ),
         ]
 
@@ -208,7 +208,7 @@ class TestLeaderboardDatabase:
             label_type=LabelType.INITIALS,
             score=245.8,
             score_type=ScoreType.TIME_IN_MILLISECONDS,
-            timestamp=timestamp,
+            created_at_timestamp=timestamp,
         )
 
         # Execute
@@ -240,7 +240,7 @@ class TestLeaderboardDatabase:
                 label_type=LabelType.INITIALS,
                 score=245.8,
                 score_type=ScoreType.TIME_IN_MILLISECONDS,
-                timestamp=datetime(2024, 1, 15, 10, 30, 0),
+                created_at_timestamp=datetime(2024, 1, 15, 10, 30, 0),
             ),
             ScoreRecord(
                 game_id="survival_game",
@@ -248,7 +248,7 @@ class TestLeaderboardDatabase:
                 label_type=LabelType.INITIALS,
                 score=892.3,
                 score_type=ScoreType.TIME_IN_MILLISECONDS,
-                timestamp=datetime(2024, 1, 14, 15, 20, 0),
+                created_at_timestamp=datetime(2024, 1, 14, 15, 20, 0),
             ),
             ScoreRecord(
                 game_id="survival_game",
@@ -256,7 +256,7 @@ class TestLeaderboardDatabase:
                 label_type=LabelType.INITIALS,
                 score=156.7,
                 score_type=ScoreType.TIME_IN_MILLISECONDS,
-                timestamp=datetime(2024, 1, 13, 12, 10, 0),
+                created_at_timestamp=datetime(2024, 1, 13, 12, 10, 0),
             ),
         ]
 
@@ -290,7 +290,7 @@ class TestLeaderboardDatabase:
             label_type=LabelType.INITIALS,
             score=100.0,
             score_type=ScoreType.POINTS,
-            timestamp=datetime(2024, 1, 15, 10, 30, 0),
+            created_at_timestamp=datetime(2024, 1, 15, 10, 30, 0),
         )
         self.db.submit_score(score_record)
 
@@ -312,7 +312,7 @@ class TestLeaderboardDatabase:
                 label_type=LabelType.INITIALS,
                 score=100.0,
                 score_type=ScoreType.POINTS,
-                timestamp=datetime(2024, 1, 15, 10, 30, 0),
+                created_at_timestamp=datetime(2024, 1, 15, 10, 30, 0),
             ),
             ScoreRecord(
                 game_id="multi_game",
@@ -320,7 +320,7 @@ class TestLeaderboardDatabase:
                 label_type=LabelType.INITIALS,
                 score=45.2,
                 score_type=ScoreType.TIME_IN_MILLISECONDS,
-                timestamp=datetime(2024, 1, 14, 15, 20, 0),
+                created_at_timestamp=datetime(2024, 1, 14, 15, 20, 0),
             ),
             ScoreRecord(
                 game_id="multi_game",
@@ -328,7 +328,7 @@ class TestLeaderboardDatabase:
                 label_type=LabelType.INITIALS,
                 score=120.7,
                 score_type=ScoreType.TIME_IN_MILLISECONDS,
-                timestamp=datetime(2024, 1, 13, 12, 10, 0),
+                created_at_timestamp=datetime(2024, 1, 13, 12, 10, 0),
             ),
         ]
 
@@ -360,7 +360,7 @@ class TestLeaderboardDatabase:
                 label_type=LabelType.INITIALS,
                 score=100.0,
                 score_type=ScoreType.POINTS,
-                timestamp=datetime(2024, 1, 15, 10, 30, 0),
+                created_at_timestamp=datetime(2024, 1, 15, 10, 30, 0),
             )
 
             # Should raise RuntimeError
@@ -394,7 +394,7 @@ class TestLeaderboardDatabase:
             label_type=LabelType.INITIALS,
             score=123.0,
             score_type=ScoreType.POINTS,
-            timestamp=datetime(2024, 1, 15, 10, 30, 0),
+            created_at_timestamp=datetime(2024, 1, 15, 10, 30, 0),
         )
 
         # Manually override the score_type to be a string instead of enum
@@ -428,7 +428,7 @@ class TestLeaderboardDatabase:
             label_type=LabelType.INITIALS,
             score=456.0,
             score_type=ScoreType.TIME_IN_MILLISECONDS,  # Explicitly use enum
-            timestamp=datetime(2024, 1, 15, 10, 30, 0),
+            created_at_timestamp=datetime(2024, 1, 15, 10, 30, 0),
         )
 
         # Since ScoreRecord uses use_enum_values=True, score_type becomes a string

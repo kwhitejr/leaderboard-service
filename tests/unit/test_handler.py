@@ -115,14 +115,14 @@ class TestHandler:
                 label="KMW",
                 label_type=LabelType.INITIALS,
                 score=103.0,
-                timestamp=datetime(2024, 1, 15, 10, 30, 0),
+                created_at_timestamp=datetime(2024, 1, 15, 10, 30, 0),
             ),
             LeaderboardEntry(
                 rank=2,
                 label="AMY",
                 label_type=LabelType.INITIALS,
                 score=95.0,
-                timestamp=datetime(2024, 1, 14, 15, 20, 0),
+                created_at_timestamp=datetime(2024, 1, 14, 15, 20, 0),
             ),
         ]
         mock_response = LeaderboardResponse(

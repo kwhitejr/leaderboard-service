@@ -204,7 +204,7 @@ components:
         - label
         - label_type
         - score
-        - timestamp
+        - created_at_timestamp
       properties:
         rank:
           type: integer
@@ -223,7 +223,7 @@ components:
           format: float
           description: Score value
           example: 12500
-        timestamp:
+        created_at_timestamp:
           type: string
           format: date-time
           description: When the score was submitted
@@ -328,14 +328,14 @@ components:
             label: "PlayerOne"
             label_type: "USERNAME"
             score: 12500
-            timestamp: "2024-01-15T10:30:00Z"
+            created_at_timestamp: "2024-01-15T10:30:00Z"
           - rank: 2
             label: "ABC"
             label_type: "INITIALS"
             score: 11000
-            timestamp: "2024-01-15T09:15:00Z"
+            created_at_timestamp: "2024-01-15T09:15:00Z"
           - rank: 3
             label: "Red Team"
             label_type: "TEAM_NAME"
             score: 9500
-            timestamp: "2024-01-15T08:45:00Z"
+            created_at_timestamp: "2024-01-15T08:45:00Z"

@@ -42,7 +42,7 @@ class LeaderboardService:
             label_type=submission.label_type,
             score=submission.score,
             score_type=submission.score_type,
-            timestamp=datetime.now(UTC),
+            created_at_timestamp=datetime.now(UTC),
         )
 
         # Submit to database

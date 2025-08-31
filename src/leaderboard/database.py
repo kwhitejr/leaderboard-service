@@ -62,7 +62,7 @@ class LeaderboardDatabase:
                 "label_type": label_type_value,
                 "score": Decimal(str(score_record.score)),
                 "score_type": score_type_value,
-                "timestamp": score_record.timestamp.isoformat(),
+                "timestamp": score_record.created_at_timestamp.isoformat(),
             }
 
             self.table.put_item(Item=item)
@@ -86,7 +86,7 @@ class LeaderboardDatabase:
                 label: str
                 label_type: LabelType
                 score: float
-                timestamp: datetime
+                created_at_timestamp: datetime
 
             # Convert items to simple data structures for sorting
             raw_entries: list[RawEntry] = []
@@ -103,7 +103,9 @@ class LeaderboardDatabase:
                         "label": str(item["label"]),
                         "label_type": label_type,
                         "score": float(str(item["score"])),
-                        "timestamp": datetime.fromisoformat(str(item["timestamp"])),
+                        "created_at_timestamp": datetime.fromisoformat(
+                            str(item["timestamp"])
+                        ),
                     }
                 )
 
@@ -126,7 +128,7 @@ class LeaderboardDatabase:
                     label=raw_entry["label"],
                     label_type=raw_entry["label_type"],
                     score=raw_entry["score"],
-                    timestamp=raw_entry["timestamp"],
+                    created_at_timestamp=raw_entry["created_at_timestamp"],
                 )
                 leaderboard.append(entry)
 

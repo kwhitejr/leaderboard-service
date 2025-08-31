@@ -58,7 +58,7 @@ class TestLeaderboardService:
         assert call_args.label_type == LabelType.INITIALS
         assert call_args.score == 103.0
         assert call_args.score_type == ScoreType.POINTS
-        assert call_args.timestamp == fixed_time
+        assert call_args.created_at_timestamp == fixed_time
 
         # Verify return value
         expected_result = {
@@ -99,14 +99,14 @@ class TestLeaderboardService:
                 label="KMW",
                 label_type=LabelType.INITIALS,
                 score=103.0,
-                timestamp=datetime(2024, 1, 15, 10, 30, 0, tzinfo=UTC),
+                created_at_timestamp=datetime(2024, 1, 15, 10, 30, 0, tzinfo=UTC),
             ),
             LeaderboardEntry(
                 rank=2,
                 label="AMY",
                 label_type=LabelType.INITIALS,
                 score=95.0,
-                timestamp=datetime(2024, 1, 14, 15, 20, 0, tzinfo=UTC),
+                created_at_timestamp=datetime(2024, 1, 14, 15, 20, 0, tzinfo=UTC),
             ),
         ]
         self.mock_database.get_leaderboard.return_value = mock_entries
@@ -199,7 +199,7 @@ class TestLeaderboardService:
                 label="TST",
                 label_type=LabelType.INITIALS,
                 score=100.0,
-                timestamp=datetime.now(UTC),
+                created_at_timestamp=datetime.now(UTC),
             )
         ]
         self.mock_database.get_leaderboard.return_value = mock_entries
@@ -262,7 +262,7 @@ class TestLeaderboardService:
         assert call_args.label == "ABC"
         assert call_args.score == 999.999
         assert call_args.score_type == ScoreType.TIME_IN_MILLISECONDS
-        assert call_args.timestamp == fixed_time
+        assert call_args.created_at_timestamp == fixed_time
 
         # Verify response contains correct data
         assert result["game_id"] == "complex-game_name-123"

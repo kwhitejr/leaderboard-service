@@ -238,7 +238,7 @@ class TestScoreRecord:
             label_type=LabelType.INITIALS,
             score=100.5,
             score_type=ScoreType.POINTS,
-            timestamp=timestamp,
+            created_at_timestamp=timestamp,
         )
 
         assert record.game_id == "snake_classic"
@@ -246,7 +246,7 @@ class TestScoreRecord:
         assert record.label_type == LabelType.INITIALS
         assert record.score == 100.5
         assert record.score_type == ScoreType.POINTS
-        assert record.timestamp == timestamp
+        assert record.created_at_timestamp == timestamp
 
 
 class TestLeaderboardResponse:
@@ -260,14 +260,14 @@ class TestLeaderboardResponse:
                 label="KMW",
                 label_type=LabelType.INITIALS,
                 score=100.5,
-                timestamp=datetime.now(UTC),
+                created_at_timestamp=datetime.now(UTC),
             ),
             LeaderboardEntry(
                 rank=2,
                 label="AMY",
                 label_type=LabelType.INITIALS,
                 score=95.0,
-                timestamp=datetime.now(UTC),
+                created_at_timestamp=datetime.now(UTC),
             ),
         ]
 

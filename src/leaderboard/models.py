@@ -89,7 +89,7 @@ class ScoreRecord(BaseModel):
     label_type: LabelType
     score: float
     score_type: ScoreType
-    timestamp: datetime
+    created_at_timestamp: datetime
 
     model_config = ConfigDict(use_enum_values=True)
 
@@ -101,7 +101,7 @@ class LeaderboardEntry(BaseModel):
     label: str
     label_type: LabelType
     score: float
-    timestamp: datetime
+    created_at_timestamp: datetime
 
 
 class LeaderboardResponse(BaseModel):
