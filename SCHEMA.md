@@ -11,26 +11,23 @@
 
 The sort key is designed to enable efficient leaderboard queries:
 
-1. **High Score** (`high_score`): Uses negative score for descending order
-   - Format: `high_score#-000000103.000`
-   - Higher scores appear first when querying
+1. **Points** (`POINTS`): Used for high score leaderboards
+   - Format: `POINTS#000000103.000`
+   - Application logic handles sorting for different leaderboard types
 
-2. **Fastest Time** (`fastest_time`): Uses positive score for ascending order
-   - Format: `fastest_time#000000034.700`
-   - Faster (lower) times appear first when querying
-
-3. **Longest Time** (`longest_time`): Uses negative score for descending order
-   - Format: `longest_time#-000000087.500`
-   - Longer (higher) times appear first when querying
+2. **Time in Milliseconds** (`TIME_IN_MILLISECONDS`): Used for time-based leaderboards
+   - Format: `TIME_IN_MILLISECONDS#000000034.700`
+   - Application logic handles sorting for fastest/longest time leaderboards
 
 ### Item Attributes
 
 - `game_id`: String - Partition key
-- `sort_key`: String - Sort key (composite)
-- `initials`: String - Player initials (max 3 chars)
+- `sort_key`: String - Sort key (composite format: `{score_type}#{formatted_score}`)
+- `label`: String - Player identifier (username, initials, team name, etc.)
+- `label_type`: String - Type of label: INITIALS, USERNAME, TEAM_NAME, CUSTOM
 - `score`: Number - Original score value
-- `score_type`: String - One of: high_score, fastest_time, longest_time
-- `timestamp`: String - ISO format timestamp
+- `score_type`: String - One of: POINTS, TIME_IN_MILLISECONDS
+- `timestamp`: String - ISO format timestamp (stored as DynamoDB field, mapped to `created_at_timestamp` in API responses)
 
 ### Query Patterns
 

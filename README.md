@@ -40,7 +40,7 @@ Response:
       "rank": 1,
       "initials": "KMW",
       "score": 103.0,
-      "timestamp": "2024-01-15T10:30:00Z"
+      "created_at_timestamp": "2024-01-15T10:30:00Z"
     }
   ]
 }
