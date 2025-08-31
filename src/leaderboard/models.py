@@ -7,7 +7,14 @@ from pydantic import BaseModel, Field, field_validator, model_validator, ConfigD
 
 
 class ScoreType(str, Enum):
-    """Supported score types for leaderboards."""
+    """Supported score representation types."""
+
+    POINTS = "POINTS"
+    TIME_IN_MILLISECONDS = "TIME_IN_MILLISECONDS"
+
+
+class LeaderboardType(str, Enum):
+    """Supported leaderboard ranking types."""
 
     HIGH_SCORE = "HIGH_SCORE"
     FASTEST_TIME = "FASTEST_TIME"
@@ -101,7 +108,7 @@ class LeaderboardResponse(BaseModel):
     """Model for leaderboard API responses."""
 
     game_id: str
-    score_type: ScoreType
+    leaderboard_type: LeaderboardType
     leaderboard: list[LeaderboardEntry]
 
     model_config = ConfigDict(use_enum_values=True)

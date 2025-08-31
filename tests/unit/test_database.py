@@ -9,7 +9,7 @@ from unittest.mock import patch
 from botocore.exceptions import ClientError
 
 from src.leaderboard.database import LeaderboardDatabase
-from src.leaderboard.models import LabelType, ScoreRecord, ScoreType
+from src.leaderboard.models import LabelType, LeaderboardType, ScoreRecord, ScoreType
 
 
 @mock_aws
@@ -44,7 +44,7 @@ class TestLeaderboardDatabase:
             label="KMW",
             label_type=LabelType.INITIALS,
             score=103.0,
-            score_type=ScoreType.HIGH_SCORE,
+            score_type=ScoreType.POINTS,
             timestamp=timestamp,
         )
 
@@ -53,7 +53,7 @@ class TestLeaderboardDatabase:
 
         # Verify by reading back from table
         response = self.db.table.get_item(
-            Key={"game_id": "snake_classic", "sort_key": "HIGH_SCORE#00999999896.000"}
+            Key={"game_id": "snake_classic", "sort_key": "POINTS#00000000103.000"}
         )
 
         assert "Item" in response
@@ -62,7 +62,7 @@ class TestLeaderboardDatabase:
         assert item["label"] == "KMW"
         assert item["label_type"] == "INITIALS"
         assert float(item["score"]) == 103.0
-        assert item["score_type"] == "HIGH_SCORE"
+        assert item["score_type"] == "POINTS"
 
     def test_submit_score_fastest_time(self) -> None:
         """Test submitting a fastest time score."""
@@ -73,7 +73,7 @@ class TestLeaderboardDatabase:
             label="AMY",
             label_type=LabelType.INITIALS,
             score=34.7,
-            score_type=ScoreType.FASTEST_TIME,
+            score_type=ScoreType.TIME_IN_MILLISECONDS,
             timestamp=timestamp,
         )
 
@@ -82,7 +82,10 @@ class TestLeaderboardDatabase:
 
         # Verify by reading back from table
         response = self.db.table.get_item(
-            Key={"game_id": "race_game", "sort_key": "FASTEST_TIME#00000000034.700"}
+            Key={
+                "game_id": "race_game",
+                "sort_key": "TIME_IN_MILLISECONDS#00000000034.700",
+            }
         )
 
         assert "Item" in response
@@ -91,7 +94,7 @@ class TestLeaderboardDatabase:
         assert item["label"] == "AMY"
         assert item["label_type"] == "INITIALS"
         assert float(item["score"]) == 34.7
-        assert item["score_type"] == "FASTEST_TIME"
+        assert item["score_type"] == "TIME_IN_MILLISECONDS"
 
     def test_get_leaderboard(self) -> None:
         """Test getting leaderboard."""
@@ -102,7 +105,7 @@ class TestLeaderboardDatabase:
                 label="KMW",
                 label_type=LabelType.INITIALS,
                 score=103.0,
-                score_type=ScoreType.HIGH_SCORE,
+                score_type=ScoreType.POINTS,
                 timestamp=datetime(2024, 1, 15, 10, 30, 0),
             ),
             ScoreRecord(
@@ -110,7 +113,7 @@ class TestLeaderboardDatabase:
                 label="AMY",
                 label_type=LabelType.INITIALS,
                 score=95.0,
-                score_type=ScoreType.HIGH_SCORE,
+                score_type=ScoreType.POINTS,
                 timestamp=datetime(2024, 1, 14, 15, 20, 0),
             ),
             ScoreRecord(
@@ -118,7 +121,7 @@ class TestLeaderboardDatabase:
                 label="BOB",
                 label_type=LabelType.INITIALS,
                 score=87.0,
-                score_type=ScoreType.HIGH_SCORE,
+                score_type=ScoreType.POINTS,
                 timestamp=datetime(2024, 1, 13, 12, 10, 0),
             ),
         ]
@@ -128,7 +131,9 @@ class TestLeaderboardDatabase:
             self.db.submit_score(score)
 
         # Execute
-        leaderboard = self.db.get_leaderboard("snake_classic", ScoreType.HIGH_SCORE, 10)
+        leaderboard = self.db.get_leaderboard(
+            "snake_classic", LeaderboardType.HIGH_SCORE, 10
+        )
 
         # Verify
         assert len(leaderboard) == 3
@@ -151,7 +156,7 @@ class TestLeaderboardDatabase:
                 label="AMY",
                 label_type=LabelType.INITIALS,
                 score=34.7,
-                score_type=ScoreType.FASTEST_TIME,
+                score_type=ScoreType.TIME_IN_MILLISECONDS,
                 timestamp=datetime(2024, 1, 15, 10, 30, 0),
             ),
             ScoreRecord(
@@ -159,7 +164,7 @@ class TestLeaderboardDatabase:
                 label="BOB",
                 label_type=LabelType.INITIALS,
                 score=45.2,
-                score_type=ScoreType.FASTEST_TIME,
+                score_type=ScoreType.TIME_IN_MILLISECONDS,
                 timestamp=datetime(2024, 1, 14, 15, 20, 0),
             ),
             ScoreRecord(
@@ -167,7 +172,7 @@ class TestLeaderboardDatabase:
                 label="KMW",
                 label_type=LabelType.INITIALS,
                 score=32.1,
-                score_type=ScoreType.FASTEST_TIME,
+                score_type=ScoreType.TIME_IN_MILLISECONDS,
                 timestamp=datetime(2024, 1, 13, 12, 10, 0),
             ),
         ]
@@ -177,7 +182,9 @@ class TestLeaderboardDatabase:
             self.db.submit_score(score)
 
         # Execute
-        leaderboard = self.db.get_leaderboard("race_game", ScoreType.FASTEST_TIME, 10)
+        leaderboard = self.db.get_leaderboard(
+            "race_game", LeaderboardType.FASTEST_TIME, 10
+        )
 
         # Verify - fastest time should be first
         assert len(leaderboard) == 3
@@ -200,7 +207,7 @@ class TestLeaderboardDatabase:
             label="JOE",
             label_type=LabelType.INITIALS,
             score=245.8,
-            score_type=ScoreType.LONGEST_TIME,
+            score_type=ScoreType.TIME_IN_MILLISECONDS,
             timestamp=timestamp,
         )
 
@@ -208,10 +215,12 @@ class TestLeaderboardDatabase:
         self.db.submit_score(score_record)
 
         # Verify by reading back from table
-        # For longest time, higher score is better, so uses same logic as high score
-        # 999999999 - 245.8 = 999999753.2, formatted with padding
+        # Now using raw score value in sort key
         response = self.db.table.get_item(
-            Key={"game_id": "survival_game", "sort_key": "LONGEST_TIME#00999999753.200"}
+            Key={
+                "game_id": "survival_game",
+                "sort_key": "TIME_IN_MILLISECONDS#00000000245.800",
+            }
         )
 
         assert "Item" in response
@@ -219,7 +228,7 @@ class TestLeaderboardDatabase:
         assert item["game_id"] == "survival_game"
         assert item["label"] == "JOE"
         assert float(item["score"]) == 245.8
-        assert item["score_type"] == "LONGEST_TIME"
+        assert item["score_type"] == "TIME_IN_MILLISECONDS"
 
     def test_get_leaderboard_longest_time(self) -> None:
         """Test getting leaderboard for longest time (descending order)."""
@@ -230,7 +239,7 @@ class TestLeaderboardDatabase:
                 label="JOE",
                 label_type=LabelType.INITIALS,
                 score=245.8,
-                score_type=ScoreType.LONGEST_TIME,
+                score_type=ScoreType.TIME_IN_MILLISECONDS,
                 timestamp=datetime(2024, 1, 15, 10, 30, 0),
             ),
             ScoreRecord(
@@ -238,7 +247,7 @@ class TestLeaderboardDatabase:
                 label="AMY",
                 label_type=LabelType.INITIALS,
                 score=892.3,
-                score_type=ScoreType.LONGEST_TIME,
+                score_type=ScoreType.TIME_IN_MILLISECONDS,
                 timestamp=datetime(2024, 1, 14, 15, 20, 0),
             ),
             ScoreRecord(
@@ -246,7 +255,7 @@ class TestLeaderboardDatabase:
                 label="BOB",
                 label_type=LabelType.INITIALS,
                 score=156.7,
-                score_type=ScoreType.LONGEST_TIME,
+                score_type=ScoreType.TIME_IN_MILLISECONDS,
                 timestamp=datetime(2024, 1, 13, 12, 10, 0),
             ),
         ]
@@ -257,7 +266,7 @@ class TestLeaderboardDatabase:
 
         # Execute
         leaderboard = self.db.get_leaderboard(
-            "survival_game", ScoreType.LONGEST_TIME, 10
+            "survival_game", LeaderboardType.LONGEST_TIME, 10
         )
 
         # Verify - longest time should be first
@@ -280,7 +289,7 @@ class TestLeaderboardDatabase:
             label="TST",
             label_type=LabelType.INITIALS,
             score=100.0,
-            score_type=ScoreType.HIGH_SCORE,
+            score_type=ScoreType.POINTS,
             timestamp=datetime(2024, 1, 15, 10, 30, 0),
         )
         self.db.submit_score(score_record)
@@ -302,7 +311,7 @@ class TestLeaderboardDatabase:
                 label="HS1",
                 label_type=LabelType.INITIALS,
                 score=100.0,
-                score_type=ScoreType.HIGH_SCORE,
+                score_type=ScoreType.POINTS,
                 timestamp=datetime(2024, 1, 15, 10, 30, 0),
             ),
             ScoreRecord(
@@ -310,7 +319,7 @@ class TestLeaderboardDatabase:
                 label="FT1",
                 label_type=LabelType.INITIALS,
                 score=45.2,
-                score_type=ScoreType.FASTEST_TIME,
+                score_type=ScoreType.TIME_IN_MILLISECONDS,
                 timestamp=datetime(2024, 1, 14, 15, 20, 0),
             ),
             ScoreRecord(
@@ -318,7 +327,7 @@ class TestLeaderboardDatabase:
                 label="LT1",
                 label_type=LabelType.INITIALS,
                 score=120.7,
-                score_type=ScoreType.LONGEST_TIME,
+                score_type=ScoreType.TIME_IN_MILLISECONDS,
                 timestamp=datetime(2024, 1, 13, 12, 10, 0),
             ),
         ]
@@ -329,11 +338,10 @@ class TestLeaderboardDatabase:
         # Execute
         score_types = self.db.get_all_score_types_for_game("multi_game")
 
-        # Verify all three score types are present
-        assert len(score_types) == 3
-        assert ScoreType.HIGH_SCORE in score_types
-        assert ScoreType.FASTEST_TIME in score_types
-        assert ScoreType.LONGEST_TIME in score_types
+        # Verify both score types are present
+        assert len(score_types) == 2
+        assert ScoreType.POINTS in score_types
+        assert ScoreType.TIME_IN_MILLISECONDS in score_types
 
     def test_submit_score_database_error(self) -> None:
         """Test submit_score handles DynamoDB errors."""
@@ -351,7 +359,7 @@ class TestLeaderboardDatabase:
                 label="TST",
                 label_type=LabelType.INITIALS,
                 score=100.0,
-                score_type=ScoreType.HIGH_SCORE,
+                score_type=ScoreType.POINTS,
                 timestamp=datetime(2024, 1, 15, 10, 30, 0),
             )
 
@@ -375,7 +383,7 @@ class TestLeaderboardDatabase:
 
             # Should raise RuntimeError
             with pytest.raises(RuntimeError, match="Failed to get leaderboard"):
-                self.db.get_leaderboard("test_game", ScoreType.HIGH_SCORE, 10)
+                self.db.get_leaderboard("test_game", LeaderboardType.HIGH_SCORE, 10)
 
     def test_submit_score_with_string_score_type(self) -> None:
         """Test submit_score when score_type is already a string value."""
@@ -385,13 +393,13 @@ class TestLeaderboardDatabase:
             label="STR",
             label_type=LabelType.INITIALS,
             score=123.0,
-            score_type=ScoreType.HIGH_SCORE,
+            score_type=ScoreType.POINTS,
             timestamp=datetime(2024, 1, 15, 10, 30, 0),
         )
 
         # Manually override the score_type to be a string instead of enum
         # This simulates the case where score_type comes in as a string
-        score_record.score_type = "HIGH_SCORE"  # This will cause line 35 to NOT execute
+        score_record.score_type = "POINTS"  # This will cause line 35 to NOT execute
 
         # Execute - this should work and cover the string handling path
         self.db.submit_score(score_record)
@@ -400,7 +408,7 @@ class TestLeaderboardDatabase:
         response = self.db.table.get_item(
             Key={
                 "game_id": "test_game",
-                "sort_key": "HIGH_SCORE#00999999876.000",  # 999999999 - 123 = 999999876
+                "sort_key": "POINTS#00000000123.000",  # Raw score now
             }
         )
 
@@ -409,7 +417,7 @@ class TestLeaderboardDatabase:
         assert item["game_id"] == "test_game"
         assert item["label"] == "STR"
         assert float(item["score"]) == 123.0
-        assert item["score_type"] == "HIGH_SCORE"
+        assert item["score_type"] == "POINTS"
 
     def test_submit_score_enum_conversion(self) -> None:
         """Test that line 35 is executed when score_type is an enum."""
@@ -419,27 +427,29 @@ class TestLeaderboardDatabase:
             label="ENM",
             label_type=LabelType.INITIALS,
             score=456.0,
-            score_type=ScoreType.FASTEST_TIME,  # Explicitly use enum
+            score_type=ScoreType.TIME_IN_MILLISECONDS,  # Explicitly use enum
             timestamp=datetime(2024, 1, 15, 10, 30, 0),
         )
 
         # Since ScoreRecord uses use_enum_values=True, score_type becomes a string
         # To test the enum branch in database.py line 35, we need to manually set it back to enum
-        score_record.score_type = ScoreType.FASTEST_TIME  # Force enum for the test
+        score_record.score_type = (
+            ScoreType.TIME_IN_MILLISECONDS
+        )  # Force enum for the test
 
         # This should hit line 35: score_type_value = score_type_value.value
         self.db.submit_score(score_record)
 
         # Verify the score was stored correctly by retrieving it
-        result = self.db.get_leaderboard("enum_test", ScoreType.FASTEST_TIME, 5)
+        result = self.db.get_leaderboard("enum_test", LeaderboardType.FASTEST_TIME, 5)
         assert len(result) == 1
         assert result[0].label == "ENM"
 
-        # Verify it was stored correctly with fastest_time logic
+        # Verify it was stored correctly with raw score
         response = self.db.table.get_item(
             Key={
                 "game_id": "enum_test",
-                "sort_key": "FASTEST_TIME#00000000456.000",  # For fastest_time, use positive score
+                "sort_key": "TIME_IN_MILLISECONDS#00000000456.000",  # Raw score now
             }
         )
 
@@ -448,7 +458,7 @@ class TestLeaderboardDatabase:
         assert item["game_id"] == "enum_test"
         assert item["label"] == "ENM"
         assert float(item["score"]) == 456.0
-        assert item["score_type"] == "FASTEST_TIME"
+        assert item["score_type"] == "TIME_IN_MILLISECONDS"
 
     def test_get_all_score_types_database_error(self) -> None:
         """Test get_all_score_types_for_game handles DynamoDB errors."""

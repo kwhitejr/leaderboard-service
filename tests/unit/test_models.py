@@ -8,6 +8,7 @@ from pydantic import ValidationError
 from src.leaderboard.models import (
     LeaderboardEntry,
     LeaderboardResponse,
+    LeaderboardType,
     LabelType,
     ScoreRecord,
     ScoreSubmission,
@@ -25,14 +26,14 @@ class TestScoreSubmission:
             label="KMW",
             label_type=LabelType.INITIALS,
             score=100.5,
-            score_type=ScoreType.HIGH_SCORE,
+            score_type=ScoreType.POINTS,
         )
 
         assert submission.game_id == "snake_classic"
         assert submission.label == "KMW"
         assert submission.label_type == LabelType.INITIALS
         assert submission.score == 100.5
-        assert submission.score_type == ScoreType.HIGH_SCORE
+        assert submission.score_type == ScoreType.POINTS
 
     def test_valid_submission_with_username(self) -> None:
         """Test valid score submission with username."""
@@ -41,14 +42,14 @@ class TestScoreSubmission:
             label="player123",
             label_type=LabelType.USERNAME,
             score=100.5,
-            score_type=ScoreType.HIGH_SCORE,
+            score_type=ScoreType.POINTS,
         )
 
         assert submission.game_id == "snake_classic"
         assert submission.label == "player123"
         assert submission.label_type == LabelType.USERNAME
         assert submission.score == 100.5
-        assert submission.score_type == ScoreType.HIGH_SCORE
+        assert submission.score_type == ScoreType.POINTS
 
     def test_valid_submission_with_team_name(self) -> None:
         """Test valid score submission with team name."""
@@ -57,14 +58,14 @@ class TestScoreSubmission:
             label="Blue Team",
             label_type=LabelType.TEAM_NAME,
             score=100.5,
-            score_type=ScoreType.HIGH_SCORE,
+            score_type=ScoreType.POINTS,
         )
 
         assert submission.game_id == "snake_classic"
         assert submission.label == "Blue Team"
         assert submission.label_type == LabelType.TEAM_NAME
         assert submission.score == 100.5
-        assert submission.score_type == ScoreType.HIGH_SCORE
+        assert submission.score_type == ScoreType.POINTS
 
     def test_default_label_type(self) -> None:
         """Test default label type when not specified."""
@@ -72,7 +73,7 @@ class TestScoreSubmission:
             game_id="test",
             label="CustomLabel",
             score=100,
-            score_type=ScoreType.HIGH_SCORE,
+            score_type=ScoreType.POINTS,
         )
         assert submission.label_type == LabelType.CUSTOM
 
@@ -84,7 +85,7 @@ class TestScoreSubmission:
                 game_id="test",
                 label="",
                 score=100,
-                score_type=ScoreType.HIGH_SCORE,
+                score_type=ScoreType.POINTS,
             )
 
         # Test whitespace-only label
@@ -93,7 +94,7 @@ class TestScoreSubmission:
                 game_id="test",
                 label="   ",
                 score=100,
-                score_type=ScoreType.HIGH_SCORE,
+                score_type=ScoreType.POINTS,
             )
 
     def test_initials_validation(self) -> None:
@@ -104,7 +105,7 @@ class TestScoreSubmission:
             label="ABC",
             label_type=LabelType.INITIALS,
             score=100,
-            score_type=ScoreType.HIGH_SCORE,
+            score_type=ScoreType.POINTS,
         )
         assert submission.label == "ABC"
         assert submission.label_type == LabelType.INITIALS
@@ -115,7 +116,7 @@ class TestScoreSubmission:
             label="A1B",
             label_type=LabelType.INITIALS,
             score=100,
-            score_type=ScoreType.HIGH_SCORE,
+            score_type=ScoreType.POINTS,
         )
         assert submission.label == "A1B"
 
@@ -129,7 +130,7 @@ class TestScoreSubmission:
                 label="AB",
                 label_type=LabelType.INITIALS,
                 score=100,
-                score_type=ScoreType.HIGH_SCORE,
+                score_type=ScoreType.POINTS,
             )
 
         # Test too long initials (4 characters)
@@ -142,7 +143,7 @@ class TestScoreSubmission:
                 label="ABCD",
                 label_type=LabelType.INITIALS,
                 score=100,
-                score_type=ScoreType.HIGH_SCORE,
+                score_type=ScoreType.POINTS,
             )
 
         # Test initials with special characters
@@ -154,7 +155,7 @@ class TestScoreSubmission:
                 label="A-B",
                 label_type=LabelType.INITIALS,
                 score=100,
-                score_type=ScoreType.HIGH_SCORE,
+                score_type=ScoreType.POINTS,
             )
 
         # Test initials with spaces
@@ -166,7 +167,7 @@ class TestScoreSubmission:
                 label="A B",
                 label_type=LabelType.INITIALS,
                 score=100,
-                score_type=ScoreType.HIGH_SCORE,
+                score_type=ScoreType.POINTS,
             )
 
     def test_non_initials_not_affected_by_length_validation(self) -> None:
@@ -177,7 +178,7 @@ class TestScoreSubmission:
             label="AB",
             label_type=LabelType.USERNAME,
             score=100,
-            score_type=ScoreType.HIGH_SCORE,
+            score_type=ScoreType.POINTS,
         )
         assert submission.label == "AB"
 
@@ -187,7 +188,7 @@ class TestScoreSubmission:
             label="LongCustomLabel",
             label_type=LabelType.CUSTOM,
             score=100,
-            score_type=ScoreType.HIGH_SCORE,
+            score_type=ScoreType.POINTS,
         )
         assert submission.label == "LongCustomLabel"
 
@@ -200,7 +201,7 @@ class TestScoreSubmission:
                 game_id=game_id,
                 label="KMW",
                 score=100,
-                score_type=ScoreType.HIGH_SCORE,
+                score_type=ScoreType.POINTS,
             )
             assert submission.game_id == game_id.lower()
 
@@ -210,7 +211,7 @@ class TestScoreSubmission:
                 game_id="snake@game",
                 label="KMW",
                 score=100,
-                score_type=ScoreType.HIGH_SCORE,
+                score_type=ScoreType.POINTS,
             )
 
     def test_score_validation(self) -> None:
@@ -221,7 +222,7 @@ class TestScoreSubmission:
                 game_id="test",
                 label="KMW",
                 score=-10,
-                score_type=ScoreType.HIGH_SCORE,
+                score_type=ScoreType.POINTS,
             )
 
 
@@ -236,7 +237,7 @@ class TestScoreRecord:
             label="KMW",
             label_type=LabelType.INITIALS,
             score=100.5,
-            score_type=ScoreType.HIGH_SCORE,
+            score_type=ScoreType.POINTS,
             timestamp=timestamp,
         )
 
@@ -244,7 +245,7 @@ class TestScoreRecord:
         assert record.label == "KMW"
         assert record.label_type == LabelType.INITIALS
         assert record.score == 100.5
-        assert record.score_type == ScoreType.HIGH_SCORE
+        assert record.score_type == ScoreType.POINTS
         assert record.timestamp == timestamp
 
 
@@ -272,11 +273,11 @@ class TestLeaderboardResponse:
 
         response = LeaderboardResponse(
             game_id="snake_classic",
-            score_type=ScoreType.HIGH_SCORE,
+            leaderboard_type=LeaderboardType.HIGH_SCORE,
             leaderboard=entries,
         )
 
         assert response.game_id == "snake_classic"
-        assert response.score_type == ScoreType.HIGH_SCORE
+        assert response.leaderboard_type == LeaderboardType.HIGH_SCORE
         assert len(response.leaderboard) == 2
         assert response.leaderboard[0].rank == 1

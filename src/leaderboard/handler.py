@@ -9,7 +9,7 @@ from aws_lambda_powertools.logging import correlation_paths
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from pydantic import ValidationError
 
-from .models import ScoreSubmission, ScoreType
+from .models import ScoreSubmission, LeaderboardType
 from .service import LeaderboardService
 
 logger = Logger()
@@ -57,17 +57,17 @@ def get_leaderboard(game_id: str) -> dict[str, Any]:
     """Get leaderboard for a specific game."""
     try:
         # Get query parameters
-        score_type_param = app.current_event.get_query_string_value(
-            "score_type", "HIGH_SCORE"
+        leaderboard_type_param = app.current_event.get_query_string_value(
+            "leaderboard_type", "HIGH_SCORE"
         )
         limit_param = app.current_event.get_query_string_value("limit", "10")
 
         # Validate parameters
         try:
-            score_type = ScoreType(score_type_param)
+            leaderboard_type = LeaderboardType(leaderboard_type_param)
         except ValueError as ve:
             raise BadRequestError(
-                f"Invalid score_type: {score_type_param}. Must be one of: {[t.value for t in ScoreType]}"
+                f"Invalid leaderboard_type: {leaderboard_type_param}. Must be one of: {[t.value for t in LeaderboardType]}"
             ) from ve
 
         try:
@@ -81,11 +81,15 @@ def get_leaderboard(game_id: str) -> dict[str, Any]:
 
         logger.info(
             "Leaderboard request",
-            extra={"game_id": game_id, "score_type": score_type.value, "limit": limit},
+            extra={
+                "game_id": game_id,
+                "leaderboard_type": leaderboard_type.value,
+                "limit": limit,
+            },
         )
 
         # Delegate to service layer
-        response = service.get_leaderboard(game_id, score_type, limit)
+        response = service.get_leaderboard(game_id, leaderboard_type, limit)
 
         logger.info(
             "Leaderboard retrieved successfully",

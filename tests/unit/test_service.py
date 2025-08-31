@@ -8,6 +8,7 @@ from src.leaderboard.models import (
     LabelType,
     LeaderboardEntry,
     LeaderboardResponse,
+    LeaderboardType,
     ScoreRecord,
     ScoreSubmission,
     ScoreType,
@@ -37,7 +38,7 @@ class TestLeaderboardService:
             label="KMW",
             label_type=LabelType.INITIALS,
             score=103.0,
-            score_type=ScoreType.HIGH_SCORE,
+            score_type=ScoreType.POINTS,
         )
 
         # Execute
@@ -56,7 +57,7 @@ class TestLeaderboardService:
         assert call_args.label == "KMW"
         assert call_args.label_type == LabelType.INITIALS
         assert call_args.score == 103.0
-        assert call_args.score_type == ScoreType.HIGH_SCORE
+        assert call_args.score_type == ScoreType.POINTS
         assert call_args.timestamp == fixed_time
 
         # Verify return value
@@ -66,7 +67,7 @@ class TestLeaderboardService:
             "label": "KMW",
             "label_type": "INITIALS",
             "score": "103.0",
-            "score_type": "HIGH_SCORE",
+            "score_type": "POINTS",
         }
         assert result == expected_result
 
@@ -78,7 +79,7 @@ class TestLeaderboardService:
             label="KMW",
             label_type=LabelType.INITIALS,
             score=103.0,
-            score_type=ScoreType.HIGH_SCORE,
+            score_type=ScoreType.POINTS,
         )
         self.mock_database.submit_score.side_effect = RuntimeError("Database error")
 
@@ -111,17 +112,19 @@ class TestLeaderboardService:
         self.mock_database.get_leaderboard.return_value = mock_entries
 
         # Execute
-        result = self.service.get_leaderboard("snake_classic", ScoreType.HIGH_SCORE, 10)
+        result = self.service.get_leaderboard(
+            "snake_classic", LeaderboardType.HIGH_SCORE, 10
+        )
 
         # Verify database was called correctly
         self.mock_database.get_leaderboard.assert_called_once_with(
-            "snake_classic", ScoreType.HIGH_SCORE, 10
+            "snake_classic", LeaderboardType.HIGH_SCORE, 10
         )
 
         # Verify return value
         assert isinstance(result, LeaderboardResponse)
         assert result.game_id == "snake_classic"
-        assert result.score_type == ScoreType.HIGH_SCORE
+        assert result.leaderboard_type == LeaderboardType.HIGH_SCORE
         assert result.leaderboard == mock_entries
 
     def test_get_leaderboard_empty_result(self) -> None:
@@ -130,17 +133,19 @@ class TestLeaderboardService:
         self.mock_database.get_leaderboard.return_value = []
 
         # Execute
-        result = self.service.get_leaderboard("new_game", ScoreType.FASTEST_TIME, 5)
+        result = self.service.get_leaderboard(
+            "new_game", LeaderboardType.FASTEST_TIME, 5
+        )
 
         # Verify database was called correctly
         self.mock_database.get_leaderboard.assert_called_once_with(
-            "new_game", ScoreType.FASTEST_TIME, 5
+            "new_game", LeaderboardType.FASTEST_TIME, 5
         )
 
         # Verify return value
         assert isinstance(result, LeaderboardResponse)
         assert result.game_id == "new_game"
-        assert result.score_type == ScoreType.FASTEST_TIME
+        assert result.leaderboard_type == LeaderboardType.FASTEST_TIME
         assert result.leaderboard == []
 
     def test_get_leaderboard_database_error(self) -> None:
@@ -150,7 +155,9 @@ class TestLeaderboardService:
 
         # Execute and verify
         with pytest.raises(RuntimeError, match="Database error"):
-            self.service.get_leaderboard("snake_classic", ScoreType.HIGH_SCORE, 10)
+            self.service.get_leaderboard(
+                "snake_classic", LeaderboardType.HIGH_SCORE, 10
+            )
 
         # Verify database was called
         self.mock_database.get_leaderboard.assert_called_once()
@@ -158,9 +165,8 @@ class TestLeaderboardService:
     def test_submit_score_different_score_types(self) -> None:
         """Test score submission with different score types."""
         test_cases = [
-            (ScoreType.HIGH_SCORE, "HIGH_SCORE"),
-            (ScoreType.FASTEST_TIME, "FASTEST_TIME"),
-            (ScoreType.LONGEST_TIME, "LONGEST_TIME"),
+            (ScoreType.POINTS, "POINTS"),
+            (ScoreType.TIME_IN_MILLISECONDS, "TIME_IN_MILLISECONDS"),
         ]
 
         for score_type, expected_value in test_cases:
@@ -204,12 +210,12 @@ class TestLeaderboardService:
             self.mock_database.reset_mock()
 
             result = self.service.get_leaderboard(
-                "test_game", ScoreType.HIGH_SCORE, limit
+                "test_game", LeaderboardType.HIGH_SCORE, limit
             )
 
             # Verify database was called with correct limit
             self.mock_database.get_leaderboard.assert_called_once_with(
-                "test_game", ScoreType.HIGH_SCORE, limit
+                "test_game", LeaderboardType.HIGH_SCORE, limit
             )
 
             # Verify response structure
@@ -241,7 +247,7 @@ class TestLeaderboardService:
             label="ABC",
             label_type=LabelType.INITIALS,
             score=999.999,
-            score_type=ScoreType.LONGEST_TIME,
+            score_type=ScoreType.TIME_IN_MILLISECONDS,
         )
 
         with patch("src.leaderboard.service.datetime") as mock_datetime:
@@ -255,11 +261,11 @@ class TestLeaderboardService:
         assert call_args.game_id == "complex-game_name-123"
         assert call_args.label == "ABC"
         assert call_args.score == 999.999
-        assert call_args.score_type == ScoreType.LONGEST_TIME
+        assert call_args.score_type == ScoreType.TIME_IN_MILLISECONDS
         assert call_args.timestamp == fixed_time
 
         # Verify response contains correct data
         assert result["game_id"] == "complex-game_name-123"
         assert result["label"] == "ABC"
         assert result["score"] == "999.999"
-        assert result["score_type"] == "LONGEST_TIME"
+        assert result["score_type"] == "TIME_IN_MILLISECONDS"

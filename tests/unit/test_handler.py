@@ -6,7 +6,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 from moto import mock_aws
 
-from src.leaderboard.models import LabelType, LeaderboardEntry, ScoreType
+from src.leaderboard.models import (
+    LabelType,
+    LeaderboardEntry,
+    LeaderboardType,
+    ScoreType,
+)
 
 
 @mock_aws
@@ -51,7 +56,7 @@ class TestHandler:
             "label": "KMW",
             "label_type": "INITIALS",
             "score": "103.0",
-            "score_type": "HIGH_SCORE",
+            "score_type": "POINTS",
         }
 
         # Mock event
@@ -61,7 +66,7 @@ class TestHandler:
             "path": "/leaderboard/scores/v1",
             "headers": {"Content-Type": "application/json"},
             "queryStringParameters": None,
-            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "INITIALS", "score": 103.0, "score_type": "HIGH_SCORE"}',
+            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "INITIALS", "score": 103.0, "score_type": "POINTS"}',
         }
 
         # Execute
@@ -76,7 +81,7 @@ class TestHandler:
         assert call_args.game_id == "snake_classic"
         assert call_args.label == "KMW"
         assert call_args.score == 103.0
-        assert call_args.score_type == ScoreType.HIGH_SCORE
+        assert call_args.score_type == ScoreType.POINTS
 
     @patch("src.leaderboard.handler.service")
     def test_submit_score_invalid_data(self, mock_service: MagicMock) -> None:
@@ -88,7 +93,7 @@ class TestHandler:
             "path": "/leaderboard/scores/v1",
             "headers": {"Content-Type": "application/json"},
             "queryStringParameters": None,
-            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "INITIALS", "score": -10, "score_type": "HIGH_SCORE"}',
+            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "INITIALS", "score": -10, "score_type": "POINTS"}',
         }
 
         # Execute
@@ -122,7 +127,7 @@ class TestHandler:
         ]
         mock_response = LeaderboardResponse(
             game_id="snake_classic",
-            score_type=ScoreType.HIGH_SCORE,
+            leaderboard_type=LeaderboardType.HIGH_SCORE,
             leaderboard=mock_entries,
         )
         mock_service.get_leaderboard.return_value = mock_response
@@ -134,7 +139,7 @@ class TestHandler:
             "path": "/leaderboard/leaderboards/v1/snake_classic",
             "pathParameters": {"game_id": "snake_classic"},
             "headers": {},
-            "queryStringParameters": {"score_type": "HIGH_SCORE", "limit": "10"},
+            "queryStringParameters": {"leaderboard_type": "HIGH_SCORE", "limit": "10"},
             "body": None,
         }
 
@@ -144,11 +149,13 @@ class TestHandler:
         # Verify
         assert response["statusCode"] == 200
         mock_service.get_leaderboard.assert_called_once_with(
-            "snake_classic", ScoreType.HIGH_SCORE, 10
+            "snake_classic", LeaderboardType.HIGH_SCORE, 10
         )
 
     @patch("src.leaderboard.handler.service")
-    def test_get_leaderboard_invalid_score_type(self, mock_service: MagicMock) -> None:
+    def test_get_leaderboard_invalid_leaderboard_type(
+        self, mock_service: MagicMock
+    ) -> None:
         """Test leaderboard request with invalid score type."""
         # Mock event
         event = {
@@ -157,7 +164,7 @@ class TestHandler:
             "path": "/leaderboard/leaderboards/v1/snake_classic",
             "pathParameters": {"game_id": "snake_classic"},
             "headers": {},
-            "queryStringParameters": {"score_type": "invalid_type"},
+            "queryStringParameters": {"leaderboard_type": "invalid_type"},
             "body": None,
         }
 
@@ -202,7 +209,7 @@ class TestHandler:
             "path": "/leaderboard/scores/v1",
             "headers": {"Content-Type": "application/json"},
             "queryStringParameters": None,
-            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "INITIALS", "score": 103.0, "score_type": "HIGH_SCORE"}',
+            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "INITIALS", "score": 103.0, "score_type": "POINTS"}',
         }
 
         # Execute and verify it raises the RuntimeError
@@ -222,7 +229,7 @@ class TestHandler:
             "path": "/leaderboard/scores/v1",
             "headers": {"Content-Type": "application/json"},
             "queryStringParameters": None,
-            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "INITIALS", "score": 103.0, "score_type": "HIGH_SCORE"}',
+            "body": '{"game_id": "snake_classic", "label": "KMW", "label_type": "INITIALS", "score": 103.0, "score_type": "POINTS"}',
         }
 
         # Execute and verify it raises the Exception
@@ -242,7 +249,7 @@ class TestHandler:
             "path": "/leaderboard/leaderboards/v1/snake_classic",
             "pathParameters": {"game_id": "snake_classic"},
             "headers": {},
-            "queryStringParameters": {"score_type": "HIGH_SCORE", "limit": "10"},
+            "queryStringParameters": {"leaderboard_type": "HIGH_SCORE", "limit": "10"},
             "body": None,
         }
 
@@ -263,7 +270,7 @@ class TestHandler:
             "path": "/leaderboard/leaderboards/v1/snake_classic",
             "pathParameters": {"game_id": "snake_classic"},
             "headers": {},
-            "queryStringParameters": {"score_type": "HIGH_SCORE", "limit": "10"},
+            "queryStringParameters": {"leaderboard_type": "HIGH_SCORE", "limit": "10"},
             "body": None,
         }
 
@@ -345,7 +352,7 @@ class TestHandler:
             "path": "/leaderboard/leaderboards/v1/test_game",
             "pathParameters": {"game_id": "test_game"},
             "headers": {},
-            "queryStringParameters": {"score_type": "HIGH_SCORE", "limit": "10"},
+            "queryStringParameters": {"leaderboard_type": "HIGH_SCORE", "limit": "10"},
             "body": None,
         }
 

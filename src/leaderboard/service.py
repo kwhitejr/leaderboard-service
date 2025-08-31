@@ -4,7 +4,12 @@ from datetime import datetime, UTC
 from typing import Any
 
 from .database import LeaderboardDatabase
-from .models import LeaderboardResponse, ScoreRecord, ScoreSubmission, ScoreType
+from .models import (
+    LeaderboardResponse,
+    ScoreRecord,
+    ScoreSubmission,
+    LeaderboardType,
+)
 
 
 class LeaderboardService:
@@ -53,13 +58,13 @@ class LeaderboardService:
         }
 
     def get_leaderboard(
-        self, game_id: str, score_type: ScoreType, limit: int
+        self, game_id: str, leaderboard_type: LeaderboardType, limit: int
     ) -> LeaderboardResponse:
         """Get leaderboard for a specific game.
 
         Args:
             game_id: Game identifier
-            score_type: Type of scores to retrieve
+            leaderboard_type: Type of leaderboard ranking to apply
             limit: Maximum number of entries to return
 
         Returns:
@@ -69,9 +74,11 @@ class LeaderboardService:
             RuntimeError: If database operation fails
         """
         # Get leaderboard from database
-        leaderboard_entries = self.db.get_leaderboard(game_id, score_type, limit)
+        leaderboard_entries = self.db.get_leaderboard(game_id, leaderboard_type, limit)
 
         # Create response
         return LeaderboardResponse(
-            game_id=game_id, score_type=score_type, leaderboard=leaderboard_entries
+            game_id=game_id,
+            leaderboard_type=leaderboard_type,
+            leaderboard=leaderboard_entries,
         )

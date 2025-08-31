@@ -97,12 +97,13 @@ paths:
             maxLength: 50
           description: Game identifier
           example: "pac-man"
-        - name: score_type
+        - name: leaderboard_type
           in: query
           required: false
           schema:
-            $ref: '#/components/schemas/ScoreType'
-          description: Type of score to filter by
+            $ref: '#/components/schemas/LeaderboardType'
+          description: Type of leaderboard ranking to apply
+          example: "HIGH_SCORE"
         - name: limit
           in: query
           required: false
@@ -129,14 +130,24 @@ components:
     ScoreType:
       type: string
       enum:
+        - POINTS
+        - TIME_IN_MILLISECONDS
+      description: |
+        Type of score representation:
+        - POINTS: Generic point-based scoring
+        - TIME_IN_MILLISECONDS: Time-based measurements in milliseconds
+
+    LeaderboardType:
+      type: string
+      enum:
         - HIGH_SCORE
         - FASTEST_TIME
         - LONGEST_TIME
       description: |
-        Type of score:
-        - HIGH_SCORE: Higher values are better
-        - FASTEST_TIME: Lower values are better (e.g., race times)
-        - LONGEST_TIME: Higher values are better (e.g., survival time)
+        Type of leaderboard ranking:
+        - HIGH_SCORE: Higher values are better (descending order)
+        - FASTEST_TIME: Lower values are better (ascending order)
+        - LONGEST_TIME: Higher values are better (descending order)
 
     LabelType:
       type: string
@@ -185,19 +196,6 @@ components:
           example: 12500
         score_type:
           $ref: '#/components/schemas/ScoreType'
-      allOf:
-        - if:
-            properties:
-              label_type:
-                const: "INITIALS"
-          then:
-            properties:
-              label:
-                type: string
-                minLength: 3
-                maxLength: 3
-                description: Must be exactly 3 characters for initials
-                pattern: '^[A-Za-z0-9]{3}$'
 
     LeaderboardEntry:
       type: object
@@ -242,8 +240,8 @@ components:
           type: string
           description: Game identifier
           example: "pac-man"
-        score_type:
-          $ref: '#/components/schemas/ScoreType'
+        leaderboard_type:
+          $ref: '#/components/schemas/LeaderboardType'
         leaderboard:
           type: array
           items:
@@ -270,10 +268,10 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
           examples:
-            invalid_score_type:
-              summary: Invalid score type
+            invalid_leaderboard_type:
+              summary: Invalid leaderboard type
               value:
-                message: "Invalid score_type: invalid_type. Must be one of: ['HIGH_SCORE', 'FASTEST_TIME', 'LONGEST_TIME']"
+                message: "Invalid leaderboard_type: invalid_type. Must be one of: ['HIGH_SCORE', 'FASTEST_TIME', 'LONGEST_TIME']"
             invalid_limit:
               summary: Invalid limit parameter
               value:
@@ -300,7 +298,7 @@ components:
         label: "PlayerOne"
         label_type: "USERNAME"
         score: 12500
-        score_type: "HIGH_SCORE"
+        score_type: "POINTS"
 
     FastestTimeSubmission:
       summary: Submit a fastest time with initials
@@ -308,8 +306,8 @@ components:
         game_id: "race-game"
         label: "XYZ"
         label_type: "INITIALS"
-        score: 125.5
-        score_type: "FASTEST_TIME"
+        score: 125500
+        score_type: "TIME_IN_MILLISECONDS"
         
     TeamScoreSubmission:
       summary: Submit a team score
@@ -318,13 +316,13 @@ components:
         label: "Blue Team"
         label_type: "TEAM_NAME"
         score: 8500
-        score_type: "HIGH_SCORE"
+        score_type: "POINTS"
 
     LeaderboardExample:
       summary: Sample leaderboard response with mixed label types
       value:
         game_id: "pac-man"
-        score_type: "HIGH_SCORE"
+        leaderboard_type: "HIGH_SCORE"
         leaderboard:
           - rank: 1
             label: "PlayerOne"

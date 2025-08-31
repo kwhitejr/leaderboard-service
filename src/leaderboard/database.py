@@ -3,13 +3,13 @@
 import os
 from datetime import datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, TypedDict
 
 import boto3
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 
-from .models import LeaderboardEntry, ScoreRecord, ScoreType, LabelType
+from .models import LeaderboardEntry, ScoreRecord, ScoreType, LeaderboardType, LabelType
 
 
 class LeaderboardDatabase:
@@ -42,17 +42,9 @@ class LeaderboardDatabase:
             else:
                 score_type_value = str(score_record.score_type)
 
-            if score_type_value == ScoreType.FASTEST_TIME.value:
-                # For fastest time, lower is better, so use positive score for ascending order
-                sort_key_score = score_record.score
-            elif score_type_value == ScoreType.HIGH_SCORE.value:
-                # For high score, higher is better, so use negative score for descending order
-                # But we need the sort to work correctly: higher scores should sort first
-                # Since DynamoDB sorts ascending, we use (max_possible_score - actual_score)
-                sort_key_score = 999999999 - score_record.score
-            else:  # LONGEST_TIME
-                # For longest time, higher is better, so same logic as high score
-                sort_key_score = 999999999 - score_record.score
+            # Score type no longer determines sorting - that's handled by leaderboard_type
+            # Just use the raw score value for the sort key since we'll apply sorting logic in get_leaderboard
+            sort_key_score = score_record.score
 
             sort_key = f"{score_type_value}#{sort_key_score:015.3f}"
 
@@ -79,27 +71,26 @@ class LeaderboardDatabase:
             raise RuntimeError(f"Failed to submit score: {e}") from e
 
     def get_leaderboard(
-        self, game_id: str, score_type: ScoreType, limit: int = 10
+        self, game_id: str, leaderboard_type: LeaderboardType, limit: int = 10
     ) -> list[LeaderboardEntry]:
-        """Get leaderboard for a game and score type."""
+        """Get leaderboard for a game and leaderboard type."""
         try:
-            # Handle both enum and string values for score_type
-            score_type_value: str
-            if isinstance(score_type, ScoreType):
-                score_type_value = score_type.value
-            else:
-                score_type_value = str(score_type)
-
-            # Query with begins_with to get all scores for this type
+            # Query all scores for this game (we'll filter and sort in memory)
             response = self.table.query(
-                KeyConditionExpression=Key("game_id").eq(game_id)
-                & Key("sort_key").begins_with(f"{score_type_value}#"),
-                Limit=limit,
-                ScanIndexForward=True,  # Ascending order (best scores first due to our key design)
+                KeyConditionExpression=Key("game_id").eq(game_id),
+                ScanIndexForward=True,
             )
 
-            leaderboard = []
-            for rank, item in enumerate(response["Items"], 1):
+            # Define typed dict for raw entries
+            class RawEntry(TypedDict):
+                label: str
+                label_type: LabelType
+                score: float
+                timestamp: datetime
+
+            # Convert items to simple data structures for sorting
+            raw_entries: list[RawEntry] = []
+            for item in response["Items"]:
                 # Parse label type with fallback
                 label_type_str = str(item.get("label_type", "custom"))
                 try:
@@ -107,12 +98,35 @@ class LeaderboardDatabase:
                 except ValueError:
                     label_type = LabelType.CUSTOM
 
+                raw_entries.append(
+                    {
+                        "label": str(item["label"]),
+                        "label_type": label_type,
+                        "score": float(str(item["score"])),
+                        "timestamp": datetime.fromisoformat(str(item["timestamp"])),
+                    }
+                )
+
+            # Sort based on leaderboard type
+            if (
+                leaderboard_type == LeaderboardType.HIGH_SCORE
+                or leaderboard_type == LeaderboardType.LONGEST_TIME
+            ):
+                # Higher scores rank better (descending)
+                raw_entries.sort(key=lambda x: x["score"], reverse=True)
+            elif leaderboard_type == LeaderboardType.FASTEST_TIME:
+                # Lower scores rank better (ascending)
+                raw_entries.sort(key=lambda x: x["score"])
+
+            # Create leaderboard entries with correct ranks and limit results
+            leaderboard = []
+            for rank, raw_entry in enumerate(raw_entries[:limit], 1):
                 entry = LeaderboardEntry(
                     rank=rank,
-                    label=str(item["label"]),
-                    label_type=label_type,
-                    score=float(str(item["score"])),
-                    timestamp=datetime.fromisoformat(str(item["timestamp"])),
+                    label=raw_entry["label"],
+                    label_type=raw_entry["label_type"],
+                    score=raw_entry["score"],
+                    timestamp=raw_entry["timestamp"],
                 )
                 leaderboard.append(entry)
 
@@ -131,7 +145,11 @@ class LeaderboardDatabase:
 
             score_types = set()
             for item in response["Items"]:
-                score_types.add(ScoreType(item["score_type"]))
+                try:
+                    score_types.add(ScoreType(item["score_type"]))
+                except ValueError:
+                    # Skip invalid score types that might exist from old data
+                    pass
 
             return list(score_types)
 
